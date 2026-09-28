@@ -5,7 +5,7 @@
     "fra1"
   ],
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @darak/db generate && pnpm db:migrate:deploy && pnpm --filter web build",
+  "buildCommand": "pnpm --filter @darak/db generate && pnpm --filter @darak/db migrate:deploy && pnpm --filter web build",
   "crons": [
     {
       "path": "/api/cron/run",

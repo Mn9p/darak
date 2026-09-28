@@ -77,7 +77,7 @@ Production refuses to start when either is missing, shorter than 32 characters, 
 ## Step 4 — Vercel project (15 minutes)
 
 1. <https://vercel.com/new> → import the repository.
-2. **Root Directory: `apps/web`** (Settings → General). Keep **"Include files outside the root directory in the Build Step"** enabled. Framework: Next.js. Leave build/install commands empty — `apps/web/vercel.json` sets them (`pnpm install --frozen-lockfile`, then `pnpm --filter @darak/db generate && pnpm db:migrate:deploy && pnpm --filter web build`) and the cron. Migrations use `DATABASE_URL_UNPOOLED` (or `DIRECT_URL`) when present, because Neon's pooler cannot run them.
+2. **Root Directory: `apps/web`** (Settings → General). Keep **"Include files outside the root directory in the Build Step"** enabled. Framework: Next.js. Leave build/install commands empty — `apps/web/vercel.json` sets them (`pnpm install --frozen-lockfile`, then `pnpm --filter @darak/db generate && pnpm --filter @darak/db migrate:deploy && pnpm --filter web build`) and the cron. Migrations use `DATABASE_URL_UNPOOLED` (or `DIRECT_URL`) when present, because Neon's pooler cannot run them.
 3. **Environment Variables** — Production:
 
    | Variable | Value | Notes |
