@@ -1,0 +1,22 @@
+// ───────────────────────── Audit Layer ─────────────────────────
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  userName       String?
+  action         String // LOGIN | CREATE | UPDATE | DELETE | ARCHIVE | APPROVE | REJECT | EXPORT | PERMISSION_CHANGE | SUPPORT_ACCESS | PAYMENT | STATUS_CHANGE
+  entityType     String
+  entityId       String?
+  entityLabel    String?
+  oldValue       String?
+  newValue       String?
+  ip             String?
+  device         String?
+  createdAt      DateTime      @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+}

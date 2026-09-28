@@ -1,0 +1,80 @@
+// ───────────────────────── Contract Engine ─────────────────────────
+
+model Contract {
+  id                String       @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code              String
+  propertyId        String
+  property          Property     @relation(fields: [propertyId], references: [id])
+  unitId            String
+  unit              Unit         @relation(fields: [unitId], references: [id])
+  tenantId          String
+  tenant            Tenant       @relation(fields: [tenantId], references: [id])
+  ownerId           String
+  owner             Owner        @relation(fields: [ownerId], references: [id])
+  startDate         DateTime
+  endDate           DateTime
+  totalAmount       Float
+  managementFeePct  Float        @default(5)
+  vatAmount         Float        @default(0)
+  paymentFrequency  String       @default("QUARTERLY") // MONTHLY | QUARTERLY | SEMI_ANNUAL | ANNUAL | CUSTOM
+  installmentsCount Int          @default(4)
+  status            String       @default("DRAFT") // DRAFT | PENDING_APPROVAL | PENDING_SIGNATURE | ACTIVE | EXPIRING_SOON | RENEWAL_PENDING | RENEWED | EXPIRED | TERMINATED | CANCELLED
+  renewalStatus     String? // WANTS_RENEWAL | NO_RENEWAL | NO_RESPONSE | NEGOTIATING | APPROVED
+  renewedFromId     String?
+  terminationDate   DateTime?
+  terminationReason String?
+  finalSettlement   String?
+  notes             String?
+  createdById       String?
+  createdBy         User?        @relation("ContractCreator", fields: [createdById], references: [id])
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  installments Installment[]
+  payments     Payment[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([organizationId, endDate])
+  @@index([unitId])
+  @@index([tenantId])
+  @@index([propertyId])
+  @@index([ownerId])
+  @@index([renewedFromId])
+}
+
+model Installment {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contractId     String
+  contract       Contract     @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  tenantId       String
+  tenant         Tenant       @relation(fields: [tenantId], references: [id])
+  seq            Int
+  dueDate        DateTime
+  /// Amount still billed. A waiver lowers it to what was paid (see waivedAmount), so a later bounced cheque re-opens only the unpaid part.
+  amount         Float
+  /// openingPaid + active allocations (recomputed by engine.refreshInstallments).
+  paidAmount     Float        @default(0)
+  /// Paid before DARAK (imported opening balance); never touched by allocations.
+  openingPaid    Float        @default(0)
+  status         String       @default("UPCOMING") // UPCOMING | DUE | OVERDUE | PARTIALLY_PAID | PAID | WAIVED
+  /// Unpaid part forgiven by a waiver or by termination (already deducted from amount).
+  waivedAmount   Float        @default(0)
+  waivedReason   String?
+  waivedById     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  allocations    PaymentAllocation[]
+  collectionCase CollectionCase?
+
+  /// One schedule per contract: a second concurrent activation fails instead of doubling the rent.
+  @@unique([contractId, seq])
+  @@index([organizationId, status])
+  @@index([organizationId, dueDate])
+  @@index([tenantId])
+}

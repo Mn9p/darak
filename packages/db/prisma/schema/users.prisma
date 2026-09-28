@@ -1,0 +1,117 @@
+// ───────────────────────── Users & Permissions ─────────────────────────
+
+model User {
+  id                String        @id @default(cuid())
+  organizationId    String?
+  organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId          String?
+  branch            Branch?       @relation(fields: [branchId], references: [id])
+  name              String
+  /// Login identity: Saudi mobile normalized to 9665XXXXXXXX (see apps/web/src/lib/phone.ts). One account per number.
+  phone             String        @unique
+  email             String?
+  role              String // SUPER_ADMIN | OFFICE_MANAGER | PROPERTY_MANAGER | LEASING | COLLECTOR | ACCOUNTANT | OWNER | TENANT | AUDITOR
+  status            String        @default("ACTIVE") // ACTIVE | INACTIVE | INVITED
+  employeeCode      String?
+  department        String?
+  jobTitle          String?
+  managerId         String?
+  manager           User?         @relation("UserManager", fields: [managerId], references: [id])
+  reports           User[]        @relation("UserManager")
+  ownerId           String?       @unique // portal link
+  owner             Owner?        @relation(fields: [ownerId], references: [id])
+  tenantId          String?       @unique // portal link
+  tenant            Tenant?       @relation(fields: [tenantId], references: [id])
+  lastLoginAt       DateTime?
+  preferences       String        @default("{}") // JSON notification preferences
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  assignments         PropertyAssignment[]
+  managedProperties   Property[]           @relation("PropertyManager")
+  accountOwners       Owner[]              @relation("OwnerAccountManager")
+  leads               Lead[]
+  createdContracts    Contract[]           @relation("ContractCreator")
+  collectionCases     CollectionCase[]
+  collectionActions   CollectionAction[]
+  recordedPayments    Payment[]
+  createdExpenses     Expense[]            @relation("ExpenseCreator")
+  approvedExpenses    Expense[]            @relation("ExpenseApprover")
+  tasksAssigned       Task[]               @relation("TaskAssignee")
+  tasksCreated        Task[]               @relation("TaskCreator")
+  documents           Document[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  savedViews          SavedView[]
+  importJobs          ImportJob[]
+  sessions            Session[]
+  supportTickets      SupportTicket[]
+  @@index([organizationId, role])
+}
+
+/// One-time login codes sent by SMS. Only the SHA-256 hash is stored; a code is valid for 5 minutes and 5 attempts.
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  ip         String?
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
+/// Throttle ledger for OTP sends, code checks and self-service sign-up (key = phone, "otp:<phone>", "signup:<phone>").
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  key       String
+  ip        String
+  success   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+  @@index([ip, createdAt])
+}
+
+model StoredFile {
+  id             String   @id @default(cuid())
+  organizationId String
+  key            String   @unique
+  name           String
+  contentType    String
+  sizeBytes      Int
+  provider       String   @default("local") // local | s3
+  uploadedById   String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device    String?
+  ip        String?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  /// Platform admin (User.id, role SUPER_ADMIN) acting through this session — set only for time-boxed support access.
+  supportAdminId String?
+
+  @@index([userId])
+}
+
+model PropertyAssignment {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, propertyId])
+  @@index([propertyId])
+}

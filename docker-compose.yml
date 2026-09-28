@@ -1,0 +1,80 @@
+# Production-style stack: Postgres + app + Caddy (automatic TLS) + nightly backup.
+# Usage: cp .env.example .env (fill secrets) → docker compose up -d --build   (monorepo: image built from repo root Dockerfile)
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: darak
+      POSTGRES_USER: darak
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U darak -d darak"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://darak:${POSTGRES_PASSWORD:-change-me}@db:5432/darak?schema=public
+      NODE_ENV: production
+      COOKIE_SECURE: "true"
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  cron:
+    image: curlimages/curl:latest
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file: .env
+    # Runs the workflow engine every 15 minutes.
+    entrypoint: ["/bin/sh", "-c", "while true; do curl -fsS -H \"Authorization: Bearer $$CRON_SECRET\" http://app:3000/api/cron/run || echo cron-failed; sleep 900; done"]
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - backups:/backups
+    # Nightly logical backup with retention (RPO target ≤ 15 min needs WAL/PITR on managed Postgres; this is the safety net).
+    entrypoint: ["/bin/sh", "-c", "while true; do pg_dump -h db -U darak -d darak -Fc -f /backups/darak-$$(date +%Y%m%d-%H%M).dump && find /backups -name '*.dump' -mtime +$$RETENTION_DAYS -delete; sleep 86400; done"]
+
+volumes:
+  pgdata:
+  uploads:
+  backups:
+  caddy_data:
+  caddy_config:

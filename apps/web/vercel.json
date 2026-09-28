@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": [
+    "fra1"
+  ],
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm --filter @darak/db generate && pnpm db:migrate:deploy && pnpm --filter web build",
+  "crons": [
+    {
+      "path": "/api/cron/run",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

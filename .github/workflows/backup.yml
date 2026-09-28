@@ -1,0 +1,52 @@
+name: Nightly database backup
+
+# Off-site logical backup of the production database (pg_dump → Cloudflare R2), on top of Neon's point-in-time restore.
+# Configure repository secrets: BACKUP_DATABASE_URL (Neon DIRECT url, not the pooler), BACKUP_S3_BUCKET,
+# S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY. Without BACKUP_DATABASE_URL the job does nothing.
+on:
+  schedule:
+    - cron: "30 0 * * *" # 03:30 Riyadh
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+      BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+      S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+      S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+      S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      S3_REGION: auto
+      S3_FORCE_PATH_STYLE: "true"
+      BACKUP_DIR: ./backups
+      BACKUP_RETENTION_DAYS: "7"
+    steps:
+      - name: Skip when not configured
+        id: cfg
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "configured=false" >> "$GITHUB_OUTPUT"; echo "BACKUP_DATABASE_URL not set — skipping."; else echo "configured=true" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.configured == 'true'
+      - uses: pnpm/action-setup@v4
+        if: steps.cfg.outputs.configured == 'true'
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.configured == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: PostgreSQL 16 client
+        if: steps.cfg.outputs.configured == 'true'
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16
+      - run: pnpm install --frozen-lockfile --filter @darak/db
+        if: steps.cfg.outputs.configured == 'true'
+      - name: Backup
+        if: steps.cfg.outputs.configured == 'true'
+        run: PATH="/usr/lib/postgresql/16/bin:$PATH" pnpm backup

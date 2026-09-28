@@ -1,0 +1,12 @@
+// DARAK — Prisma schema (multi-file). Every business entity carries organizationId.
+// Enums are stored as strings; allowed values live in apps/web/src/lib/constants.ts
+// Files: base (generator+datasource) platform users portfolio leasing contracts collections finance workflow audit integrations
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}

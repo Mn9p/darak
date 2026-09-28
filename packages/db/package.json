@@ -1,0 +1,38 @@
+{
+  "name": "@darak/db",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DARAK database layer: Prisma schema, migrations, client singleton, DB scripts",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "prisma": {
+    "schema": "./prisma/schema"
+  },
+  "scripts": {
+    "generate": "node scripts/prisma.mjs generate",
+    "push": "node scripts/prisma.mjs db push --skip-generate",
+    "reset": "node scripts/reset.mjs",
+    "validate": "node scripts/prisma.mjs validate",
+    "format": "node scripts/prisma.mjs format",
+    "studio": "node scripts/prisma.mjs studio",
+    "migrate:deploy": "node scripts/prisma.mjs migrate deploy",
+    "migrate:diff": "node scripts/migrate-diff.mjs",
+    "backup": "node scripts/backup.mjs",
+    "typecheck": "tsc --noEmit",
+    "migrate:new": "node scripts/migrate-new.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1134.0",
+    "@next/env": "15.5.26",
+    "@types/node": "^22.10.7",
+    "prisma": "^6.19.3",
+    "typescript": "^5.7.3"
+  }
+}

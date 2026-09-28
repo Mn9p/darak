@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دارك — الهوية البصرية ونظام تصميم المنتج</title>
+<style>
+  :root{
+    /* ===== DARAK Core Brand ===== */
+    --dk-ink-950:#0C211C;      /* primary dark */
+    --dk-green-800:#123C32;    /* signature green */
+    --dk-green-650:#1F5A49;    /* interaction */
+    --dk-green-500:#2F7A63;    /* charts / active */
+    --dk-sand-500:#C8A66A;     /* premium accent */
+    --dk-sand-200:#E8D8B8;     /* soft warm accent */
+    --dk-sand-75:#F7F1E7;      /* warm panels */
+    --dk-mist-75:#F3F6F4;      /* app background */
+    --dk-white:#FFFFFF;
+    --dk-border:#D9E2DD;
+
+    /* ===== Text ===== */
+    --dk-text:#102A23;
+    --dk-text-secondary:#405A51;
+    --dk-text-muted:#6B7F78;
+    --dk-text-faint:#8FA099;
+    --dk-on-dark:#FFFFFF;
+
+    /* ===== Semantic ===== */
+    --dk-success:#1B7A54;
+    --dk-success-bg:#E8F5EE;
+    --dk-warning:#B77816;
+    --dk-warning-bg:#FCF3DF;
+    --dk-danger:#C54A43;
+    --dk-danger-bg:#FBE9E7;
+    --dk-info:#2E6392;
+    --dk-info-bg:#EAF2F8;
+
+    /* ===== Type ===== */
+    --font-ar:'IBM Plex Sans Arabic','Noto Sans Arabic','Tahoma','Arial',sans-serif;
+    --font-latin:'Inter','Segoe UI','Arial',sans-serif;
+
+    /* ===== Shape ===== */
+    --radius-card:16px;
+    --radius-btn:10px;
+    --radius-pill:999px;
+    --shadow-card:0 10px 30px rgba(12,33,28,.07);
+    --shadow-float:0 18px 50px rgba(12,33,28,.12);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font-ar);background:var(--dk-white);color:var(--dk-text);line-height:1.7}
+  .wrap{max-width:1180px;margin:0 auto;padding:42px 30px 80px}
+
+  .hero{position:relative;overflow:hidden;background:var(--dk-ink-950);border-radius:26px;padding:46px 48px;min-height:270px;display:flex;align-items:center;justify-content:space-between;gap:34px;color:white}
+  .hero:before{content:"";position:absolute;inset:auto -120px -160px auto;width:500px;height:500px;border:1px solid rgba(232,216,184,.18);border-radius:50%}
+  .hero:after{content:"";position:absolute;inset:-180px auto auto -160px;width:430px;height:430px;background:radial-gradient(circle,rgba(200,166,106,.18),rgba(200,166,106,0) 67%)}
+  .hero-copy{position:relative;z-index:2;max-width:610px}
+  .kicker{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);padding:7px 12px;border-radius:999px;font-size:12px;color:#E8D8B8;margin-bottom:18px}
+  .hero h1{font-size:58px;line-height:1.05;font-weight:800;letter-spacing:-1px;margin-bottom:10px}
+  .hero .tagline{font-size:20px;font-weight:600;color:#E8D8B8;margin-bottom:10px}
+  .hero .sub{font-size:14px;color:#B9C8C2;max-width:560px}
+  .hero-mark{position:relative;z-index:2;width:220px;height:220px;display:grid;place-items:center;border-radius:30px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+
+  .section{margin-top:64px}
+  h2{font-size:29px;font-weight:800;color:var(--dk-ink-950);margin-bottom:5px}
+  .sectionnote{font-size:14.5px;color:var(--dk-text-muted);margin-bottom:22px;max-width:850px}
+  .eyebrow{font:700 12px/1 var(--font-latin);letter-spacing:.15em;color:var(--dk-green-650);text-transform:uppercase;margin-bottom:9px}
+
+  .story{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+  .story-card{border:1px solid var(--dk-border);border-radius:var(--radius-card);padding:26px;background:#fff;box-shadow:var(--shadow-card)}
+  .story-card.dark{background:var(--dk-green-800);color:white;border-color:var(--dk-green-800)}
+  .story-card h3{font-size:19px;margin-bottom:8px}
+  .story-card p{font-size:14.5px;color:var(--dk-text-secondary)}
+  .story-card.dark p{color:#D8E3DE}
+  .brand-idea{font-size:27px!important;font-weight:800;color:var(--dk-sand-200)!important;line-height:1.35}
+
+  /* logo */
+  .logo-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .logobox{min-height:240px;border:1px solid var(--dk-border);border-radius:var(--radius-card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:white;box-shadow:var(--shadow-card)}
+  .logobox.dark{background:var(--dk-ink-950);border-color:var(--dk-ink-950)}
+  .logo-lockup{display:flex;align-items:center;gap:16px;direction:rtl}
+  .wordmark{font-weight:800;font-size:47px;letter-spacing:-1.2px;color:var(--dk-ink-950);line-height:1}
+  .logobox.dark .wordmark{color:white}
+  .note{font-size:12.5px;color:var(--dk-text-muted)}
+  .logobox.dark .note{color:#A9BAB4}
+  .mark{width:74px;height:74px}
+  .mark-lg{width:130px;height:130px}
+  .logo-concept{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+  .concept-chip{background:var(--dk-mist-75);border:1px solid var(--dk-border);border-radius:14px;padding:18px;text-align:center}
+  .concept-chip b{display:block;margin-bottom:4px;color:var(--dk-green-800)}
+  .concept-chip span{font-size:13px;color:var(--dk-text-muted)}
+
+  /* swatches */
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:15px}
+  .sw{border:1px solid var(--dk-border);border-radius:var(--radius-card);overflow:hidden;background:#fff;box-shadow:0 4px 16px rgba(12,33,28,.04)}
+  .chip{height:92px}
+  .meta{padding:13px 14px}
+  .name{font-weight:800;font-size:13.5px;color:var(--dk-ink-950)}
+  .hex{font:12.5px/1.6 ui-monospace,Consolas,monospace;color:var(--dk-text-muted);direction:ltr;text-align:right}
+  .use{font-size:12.5px;color:var(--dk-text-faint);margin-top:2px}
+
+  /* typography */
+  .spec{border:1px solid var(--dk-border);border-radius:var(--radius-card);padding:25px 27px;margin-bottom:13px;background:#fff}
+  .spec .label{font:700 11.5px/1.4 var(--font-latin);letter-spacing:.08em;text-transform:uppercase;color:var(--dk-text-faint);margin-bottom:10px;direction:ltr;text-align:left}
+  .h1x{font-size:46px;font-weight:800;color:var(--dk-ink-950);line-height:1.2}
+  .h2x{font-size:30px;font-weight:800;color:var(--dk-green-800)}
+  .h3x{font-size:21px;font-weight:700;color:var(--dk-green-800)}
+  .bodyx{font-size:16px;color:var(--dk-text-secondary);max-width:720px}
+  .latin{font-family:var(--font-latin);direction:ltr;text-align:left}
+
+  /* components */
+  .comprow{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .btn{display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;padding:11px 21px;border-radius:var(--radius-btn);border:1px solid transparent}
+  .btn-primary{background:var(--dk-green-800);color:white}
+  .btn-accent{background:var(--dk-sand-500);color:var(--dk-ink-950)}
+  .btn-outline{background:white;color:var(--dk-green-800);border-color:var(--dk-green-800)}
+  .btn-ghost{background:var(--dk-mist-75);color:var(--dk-green-800)}
+  .tag{display:inline-flex;font-size:12px;font-weight:800;padding:5px 11px;border-radius:var(--radius-pill)}
+  .tag-green{background:var(--dk-success-bg);color:var(--dk-success)}
+  .tag-gold{background:var(--dk-warning-bg);color:var(--dk-warning)}
+  .tag-red{background:var(--dk-danger-bg);color:var(--dk-danger)}
+  .tag-info{background:var(--dk-info-bg);color:var(--dk-info)}
+
+  .democards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:18px}
+  .democard{border:1px solid var(--dk-border);border-radius:var(--radius-card);padding:22px;background:#fff;box-shadow:var(--shadow-card)}
+  .democard h4{font-size:15px;color:var(--dk-green-800);margin-bottom:5px}
+  .democard p{font-size:13px;color:var(--dk-text-muted)}
+  .democard .stat{font:800 34px/1.1 var(--font-latin);color:var(--dk-green-650);direction:ltr;text-align:right}
+  .democard.dark{background:var(--dk-ink-950);border-color:var(--dk-ink-950)}
+  .democard.dark h4,.democard.dark .stat{color:var(--dk-sand-200)}
+  .democard.dark p{color:#BCCBC5}
+
+  /* app preview */
+  .app{background:var(--dk-mist-75);border:1px solid var(--dk-border);border-radius:22px;padding:16px;display:grid;grid-template-columns:210px 1fr;gap:15px;box-shadow:var(--shadow-float)}
+  .sidebar{background:var(--dk-ink-950);border-radius:16px;padding:20px 14px;color:white;min-height:420px}
+  .mini-brand{display:flex;align-items:center;gap:9px;margin-bottom:26px;padding:0 7px}.mini-brand b{font-size:22px}
+  .navitem{padding:9px 11px;border-radius:9px;color:#C6D2CE;font-size:13px;margin-bottom:4px}.navitem.active{background:rgba(200,166,106,.15);color:#F1DEB9}.navitem:before{content:"•";margin-left:9px;color:#C8A66A}
+  .dash{padding:8px 3px}
+  .dash-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.dash-top h3{font-size:21px}.dash-top span{font-size:12px;color:var(--dk-text-muted)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.statcard{background:white;border:1px solid var(--dk-border);border-radius:12px;padding:14px}.statcard span{font-size:11px;color:var(--dk-text-muted)}.statcard b{display:block;font:800 24px/1.4 var(--font-latin);color:var(--dk-green-800);direction:ltr;text-align:right}
+  .dash-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:10px;margin-top:10px}.panel{background:white;border:1px solid var(--dk-border);border-radius:12px;padding:15px;min-height:210px}.panel h5{font-size:13px;margin-bottom:15px}.bar{height:10px;border-radius:10px;background:#E8EFEB;margin:9px 0;overflow:hidden}.bar i{display:block;height:100%;background:var(--dk-green-500);border-radius:inherit}.row{display:flex;justify-content:space-between;font-size:11px;color:var(--dk-text-muted);padding:9px 0;border-bottom:1px solid #EEF2EF}.row strong{color:var(--dk-text)}
+
+  /* tokens */
+  pre{direction:ltr;text-align:left;background:var(--dk-ink-950);color:#DCE6E2;border-radius:var(--radius-card);padding:24px 26px;font:12.5px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-x:auto}
+  pre .c{color:#C8A66A}
+
+  .voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .voice-card{border:1px solid var(--dk-border);border-radius:var(--radius-card);padding:22px;background:#fff}
+  .voice-card h4{margin-bottom:7px;color:var(--dk-green-800)}
+  .voice-card ul{padding-right:18px;color:var(--dk-text-secondary);font-size:14px}
+  .voice-card.bad{background:#FCF7F6}.voice-card.bad h4{color:var(--dk-danger)}
+
+  .rules{columns:2;gap:34px;color:var(--dk-text-secondary);font-size:14px}.rules li{break-inside:avoid;margin:0 18px 11px 0}
+
+  footer{margin-top:72px;border-top:1px solid var(--dk-border);padding-top:22px;display:flex;justify-content:space-between;font-size:12.5px;color:var(--dk-text-faint)}
+
+  @media(max-width:850px){
+    .hero{padding:34px 26px;min-height:auto}.hero h1{font-size:45px}.hero-mark{width:150px;height:150px}.mark-lg{width:100px;height:100px}
+    .story,.logo-grid,.voice-grid{grid-template-columns:1fr}.logo-concept{grid-template-columns:1fr}.democards{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{display:none}.stats{grid-template-columns:repeat(2,1fr)}.dash-grid{grid-template-columns:1fr}.rules{columns:1}
+  }
+  @media(max-width:560px){.hero{display:block}.hero-mark{margin-top:28px}.wrap{padding:20px 15px 50px}.hero h1{font-size:39px}.h1x{font-size:35px}.stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="kicker">Brand Identity &amp; Product Design System · v1.0</div>
+      <h1>دارك</h1>
+      <div class="tagline">إدارة أملاكك. بصورة أوضح.</div>
+      <div class="sub">هوية لمنصة تشغيل وإشراف الأملاك العقارية — موثوقة، عملية، وهادئة بصريًا. مصممة لتخدم المالك ومدير العقار والموظف من لوحة واحدة.</div>
+    </div>
+    <div class="hero-mark">
+      <svg class="mark-lg" viewBox="0 0 120 120" aria-label="شعار دارك">
+        <path d="M23 99V51C23 29 39 16 60 16h37v20H62c-11 0-19 7-19 18v25h24c10 0 17-6 17-16V53h20v13c0 22-14 33-36 33H23Z" fill="#E8D8B8"/>
+        <path d="M43 79h24c10 0 17-6 17-16V53h-17v9c0 3-2 5-5 5H43v12Z" fill="#C8A66A" opacity=".65"/>
+      </svg>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">01 / Brand Idea</div>
+    <h2>الفكرة الأساسية للهوية</h2>
+    <div class="sectionnote">دارك تعني “دارك” — مكانك وأملاكك — لكن المنتج نفسه ليس تطبيق عقارات استهلاكيًا؛ هو نظام تشغيل مالي وتشغيلي. لذلك الهوية يجب أن تبدو مؤسسية، ذكية، ويمكن الوثوق بها.</div>
+    <div class="story">
+      <div class="story-card">
+        <h3>ماذا يجب أن تقول الهوية؟</h3>
+        <p>نظام واحد يجمع العقار، الوحدة، العقد، التحصيل، الصيانة والتقارير. الواجهة لا تصرخ؛ تنظّم. العلامة لا تبدو “مكتب عقار تقليدي”؛ تبدو منصة تقنية قادرة على إدارة محفظة كاملة.</p>
+      </div>
+      <div class="story-card dark">
+        <p class="brand-idea">“كل دار تحت السيطرة.”</p>
+        <p>فكرة العلامة: وضوح، ملكية، رقابة وتشغيل — بدون تعقيد بصري.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">02 / Logo</div>
+    <h2>الشعار</h2>
+    <div class="sectionnote">الرمز يجمع بين قوس/مدخل معماري وحرف «د» بصورة هندسية. القوس يرمز للعقار، والمسار الداخلي يرمز لدورة التشغيل المتصلة داخل المنصة. الشعار لا يعتمد على أيقونة بيت تقليدية حتى يبقى مناسبًا للشركات والمحافظ الكبيرة.</div>
+    <div class="logo-grid">
+      <div class="logobox">
+        <div class="logo-lockup">
+          <svg class="mark" viewBox="0 0 120 120">
+            <path d="M23 99V51C23 29 39 16 60 16h37v20H62c-11 0-19 7-19 18v25h24c10 0 17-6 17-16V53h20v13c0 22-14 33-36 33H23Z" fill="#123C32"/>
+            <path d="M43 79h24c10 0 17-6 17-16V53h-17v9c0 3-2 5-5 5H43v12Z" fill="#C8A66A"/>
+          </svg>
+          <div class="wordmark">دارك</div>
+        </div>
+        <div class="note">Primary — أخضر عميق على خلفية بيضاء</div>
+      </div>
+      <div class="logobox dark">
+        <div class="logo-lockup">
+          <svg class="mark" viewBox="0 0 120 120">
+            <path d="M23 99V51C23 29 39 16 60 16h37v20H62c-11 0-19 7-19 18v25h24c10 0 17-6 17-16V53h20v13c0 22-14 33-36 33H23Z" fill="#FFFFFF"/>
+            <path d="M43 79h24c10 0 17-6 17-16V53h-17v9c0 3-2 5-5 5H43v12Z" fill="#C8A66A"/>
+          </svg>
+          <div class="wordmark">دارك</div>
+        </div>
+        <div class="note">Inverse — أبيض مع رملي على Ink 950</div>
+      </div>
+    </div>
+    <div class="logo-concept">
+      <div class="concept-chip"><b>القوس</b><span>العقار، المدخل، الأمان</span></div>
+      <div class="concept-chip"><b>حرف د</b><span>ارتباط مباشر باسم دارك</span></div>
+      <div class="concept-chip"><b>المسار</b><span>دورة تشغيل مترابطة وليست ملفات منفصلة</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">03 / Core Palette</div>
+    <h2>لوحة الألوان الأساسية</h2>
+    <div class="sectionnote">الأخضر العميق هو لون العلامة الرئيسي. الرملي يعطي دفئًا ومكانة بدون تحويل المنتج إلى هوية فاخرة مبالغ فيها. الخلفيات تميل للأبيض والضبابي حتى تبقى الجداول والبيانات واضحة.</div>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#0C211C"></div><div class="meta"><div class="name">Ink 950 · Primary Dark</div><div class="hex">#0C211C</div><div class="use">Hero, sidebar, footer, premium surfaces</div></div></div>
+      <div class="sw"><div class="chip" style="background:#123C32"></div><div class="meta"><div class="name">Green 800 · Brand</div><div class="hex">#123C32</div><div class="use">Logo, main headings, primary buttons</div></div></div>
+      <div class="sw"><div class="chip" style="background:#1F5A49"></div><div class="meta"><div class="name">Green 650 · Interactive</div><div class="hex">#1F5A49</div><div class="use">Links, active states, chart emphasis</div></div></div>
+      <div class="sw"><div class="chip" style="background:#2F7A63"></div><div class="meta"><div class="name">Green 500</div><div class="hex">#2F7A63</div><div class="use">Charts, positive trends, hover states</div></div></div>
+      <div class="sw"><div class="chip" style="background:#C8A66A"></div><div class="meta"><div class="name">Sand 500 · Accent</div><div class="hex">#C8A66A</div><div class="use">Premium accent, highlights, brand moments</div></div></div>
+      <div class="sw"><div class="chip" style="background:#E8D8B8"></div><div class="meta"><div class="name">Sand 200</div><div class="hex">#E8D8B8</div><div class="use">Subtle accents on dark surfaces</div></div></div>
+      <div class="sw"><div class="chip" style="background:#F7F1E7"></div><div class="meta"><div class="name">Sand 75</div><div class="hex">#F7F1E7</div><div class="use">Warm feature sections and owner portal moments</div></div></div>
+      <div class="sw"><div class="chip" style="background:#F3F6F4"></div><div class="meta"><div class="name">Mist 75</div><div class="hex">#F3F6F4</div><div class="use">Dashboard and app background</div></div></div>
+      <div class="sw"><div class="chip" style="background:#D9E2DD"></div><div class="meta"><div class="name">Border</div><div class="hex">#D9E2DD</div><div class="use">Dividers, fields, cards and tables</div></div></div>
+      <div class="sw"><div class="chip" style="background:#FFFFFF;border-bottom:1px solid #D9E2DD"></div><div class="meta"><div class="name">White</div><div class="hex">#FFFFFF</div><div class="use">Primary content surface</div></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">04 / Text &amp; Semantic</div>
+    <h2>ألوان النص والحالات</h2>
+    <div class="sectionnote">ألوان الحالات تُستخدم للمعنى فقط: تم السداد، تنبيه، تأخر، أو معلومة. اللون الذهبي/الرملي جزء من الهوية وليس لون Warning داخل المنتج.</div>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#102A23"></div><div class="meta"><div class="name">Text / Primary</div><div class="hex">#102A23</div><div class="use">Headlines &amp; table values</div></div></div>
+      <div class="sw"><div class="chip" style="background:#405A51"></div><div class="meta"><div class="name">Text / Secondary</div><div class="hex">#405A51</div><div class="use">Body copy</div></div></div>
+      <div class="sw"><div class="chip" style="background:#6B7F78"></div><div class="meta"><div class="name">Text / Muted</div><div class="hex">#6B7F78</div><div class="use">Labels &amp; metadata</div></div></div>
+      <div class="sw"><div class="chip" style="background:#1B7A54"></div><div class="meta"><div class="name">Success</div><div class="hex">#1B7A54</div><div class="use">Paid, completed, positive</div></div></div>
+      <div class="sw"><div class="chip" style="background:#B77816"></div><div class="meta"><div class="name">Warning</div><div class="hex">#B77816</div><div class="use">Due soon, needs review</div></div></div>
+      <div class="sw"><div class="chip" style="background:#C54A43"></div><div class="meta"><div class="name">Danger</div><div class="hex">#C54A43</div><div class="use">Overdue, error, destructive actions</div></div></div>
+      <div class="sw"><div class="chip" style="background:#2E6392"></div><div class="meta"><div class="name">Info</div><div class="hex">#2E6392</div><div class="use">Informational states</div></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">05 / Typography</div>
+    <h2>الخطوط</h2>
+    <div class="sectionnote">الهوية عربية أولًا. المقترح الأساسي هو IBM Plex Sans Arabic أو Noto Sans Arabic للنصوص والواجهات، مع Inter للإنجليزية والأرقام. الوزن الثقيل محجوز للعناوين والأرقام المهمة.</div>
+    <div class="spec"><div class="label">H1 / HERO — Arabic 800 · 44–64px</div><div class="h1x">كل أملاكك. بصورة أوضح.</div></div>
+    <div class="spec"><div class="label">H2 / SECTION — Arabic 800 · 28–34px</div><div class="h2x">المحفظة العقارية تحت سيطرتك</div></div>
+    <div class="spec"><div class="label">H3 / CARD — Arabic 700 · 20–22px</div><div class="h3x">التحصيل والمتأخرات</div></div>
+    <div class="spec"><div class="label">BODY — Arabic 400 · 16px / 1.7</div><div class="bodyx">تابع العقارات والوحدات والعقود والتحصيل والمهام التشغيلية من مكان واحد، مع صلاحيات واضحة لكل مستخدم.</div></div>
+    <div class="spec"><div class="label">LATIN / NUMBERS — Inter 700</div><div class="h2x latin">SAR 1,248,500 · 94.2% Occupancy</div></div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">06 / UI Components</div>
+    <h2>مكونات الواجهة</h2>
+    <div class="sectionnote">الزوايا هادئة وليست مبالغًا في تدويرها. البطاقات بيضاء فوق Mist 75، والألوان الدلالية تظهر داخل Badges والتنبيهات فقط.</div>
+    <div class="comprow">
+      <span class="btn btn-primary">إضافة عقار</span>
+      <span class="btn btn-accent">عرض تقرير المالك</span>
+      <span class="btn btn-outline">تصدير التقرير</span>
+      <span class="btn btn-ghost">حفظ كمسودة</span>
+      <span class="tag tag-green">تم السداد</span>
+      <span class="tag tag-gold">قريب الاستحقاق</span>
+      <span class="tag tag-red">متأخر</span>
+      <span class="tag tag-info">قيد المراجعة</span>
+    </div>
+    <div class="democards">
+      <div class="democard"><h4>الوحدات المؤجرة</h4><div class="stat">128</div><p>قيمة أساسية واضحة بدون ألوان صاخبة.</p></div>
+      <div class="democard"><h4>نسبة الإشغال</h4><div class="stat">94.2%</div><p>الأخضر للبيانات الرئيسية والتفاعل.</p></div>
+      <div class="democard dark"><h4>صافي مستحق المالك</h4><div class="stat">248K</div><p>Dark surface للحظات المهمة، وليس لكل صفحة.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">07 / Product Theme</div>
+    <h2>اتجاه واجهة منصة دارك</h2>
+    <div class="sectionnote">النظام نفسه يجب أن يبدو مثل أداة تشغيل احترافية: Sidebar داكن ثابت، مساحة عمل فاتحة، بيانات كثيفة لكن منظمة، واستخدام محدود للون الرملي كعلامة هوية.</div>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="mini-brand">
+          <svg width="30" height="30" viewBox="0 0 120 120"><path d="M23 99V51C23 29 39 16 60 16h37v20H62c-11 0-19 7-19 18v25h24c10 0 17-6 17-16V53h20v13c0 22-14 33-36 33H23Z" fill="#fff"/><path d="M43 79h24c10 0 17-6 17-16V53h-17v9c0 3-2 5-5 5H43v12Z" fill="#C8A66A"/></svg>
+          <b>دارك</b>
+        </div>
+        <div class="navitem active">الرئيسية</div>
+        <div class="navitem">العقارات</div>
+        <div class="navitem">الوحدات</div>
+        <div class="navitem">العقود</div>
+        <div class="navitem">التحصيل</div>
+        <div class="navitem">الصيانة</div>
+        <div class="navitem">التقارير</div>
+        <div class="navitem">الإعدادات</div>
+      </aside>
+      <div class="dash">
+        <div class="dash-top"><h3>نظرة عامة</h3><span>آخر تحديث: الآن</span></div>
+        <div class="stats">
+          <div class="statcard"><span>العقارات</span><b>24</b></div>
+          <div class="statcard"><span>الوحدات</span><b>148</b></div>
+          <div class="statcard"><span>نسبة الإشغال</span><b>94%</b></div>
+          <div class="statcard"><span>المتأخرات</span><b>82K</b></div>
+        </div>
+        <div class="dash-grid">
+          <div class="panel">
+            <h5>التحصيل الشهري</h5>
+            <div class="row"><strong>يناير</strong><span>92%</span></div><div class="bar"><i style="width:92%"></i></div>
+            <div class="row"><strong>فبراير</strong><span>88%</span></div><div class="bar"><i style="width:88%"></i></div>
+            <div class="row"><strong>مارس</strong><span>96%</span></div><div class="bar"><i style="width:96%"></i></div>
+          </div>
+          <div class="panel">
+            <h5>متابعة اليوم</h5>
+            <div class="row"><strong>عقود تنتهي قريبًا</strong><span>8</span></div>
+            <div class="row"><strong>دفعات متأخرة</strong><span>11</span></div>
+            <div class="row"><strong>مهام متأخرة</strong><span>4</span></div>
+            <div class="row"><strong>طلبات صيانة</strong><span>7</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">08 / Brand Voice</div>
+    <h2>نبرة العلامة</h2>
+    <div class="sectionnote">دارك تتكلم بثقة ووضوح. لا تستخدم لغة تسويقية مبالغ فيها ولا مصطلحات تقنية إذا لم تكن ضرورية.</div>
+    <div class="voice-grid">
+      <div class="voice-card"><h4>نكتب هكذا</h4><ul><li>كل أملاكك في مكان واحد.</li><li>اعرف ما استُحق، وما تم تحصيله، وما يحتاج متابعة.</li><li>عقدك سينتهي خلال 30 يومًا.</li><li>لديك 4 مهام متأخرة تحتاج إجراء.</li></ul></div>
+      <div class="voice-card bad"><h4>ونتجنب هذا</h4><ul><li>ثورة في عالم إدارة الأملاك.</li><li>حل سحري يغيّر كل شيء.</li><li>أفضل منصة عقارية على الإطلاق.</li><li>لغة طويلة تخفي المعلومة الأساسية.</li></ul></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">09 / Messaging</div>
+    <h2>الرسائل الأساسية</h2>
+    <div class="story">
+      <div class="story-card"><h3>Tagline الأساسي</h3><p class="brand-idea" style="color:#123C32!important">إدارة أملاكك. بصورة أوضح.</p><p>قصير، مباشر، ومناسب للموقع والمنتج.</p></div>
+      <div class="story-card"><h3>Product statement</h3><p>دارك تجمع العقارات والوحدات والعقود والتحصيل والصيانة والتقارير في نظام تشغيل واحد للمكتب العقاري.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">10 / Design Tokens</div>
+    <h2>CSS Design Tokens</h2>
+    <div class="sectionnote">قيم جاهزة للاستخدام داخل الموقع ولوحة التحكم.</div>
+<pre><span class="c">/* DARAK design tokens — v1.0 */</span>
+:root {
+  <span class="c">/* Core */</span>
+  --dk-ink-950:   #0C211C;
+  --dk-green-800: #123C32;
+  --dk-green-650: #1F5A49;
+  --dk-green-500: #2F7A63;
+  --dk-sand-500:  #C8A66A;
+  --dk-sand-200:  #E8D8B8;
+  --dk-sand-75:   #F7F1E7;
+  --dk-mist-75:   #F3F6F4;
+  --dk-white:     #FFFFFF;
+  --dk-border:    #D9E2DD;
+
+  <span class="c">/* Text */</span>
+  --dk-text:           #102A23;
+  --dk-text-secondary: #405A51;
+  --dk-text-muted:     #6B7F78;
+  --dk-text-faint:     #8FA099;
+
+  <span class="c">/* Semantic */</span>
+  --dk-success:    #1B7A54;
+  --dk-warning:    #B77816;
+  --dk-danger:     #C54A43;
+  --dk-info:       #2E6392;
+
+  <span class="c">/* Shape */</span>
+  --radius-card: 16px;
+  --radius-btn:  10px;
+  --shadow-card: 0 10px 30px rgba(12,33,28,.07);
+}</pre>
+  </section>
+
+  <section class="section">
+    <div class="eyebrow">11 / Usage Rules</div>
+    <h2>قواعد الاستخدام</h2>
+    <ul class="rules">
+      <li>Green 800 هو اللون الأساسي للشعار والأزرار الرئيسية.</li>
+      <li>لا تستخدم الرملي كنص أساسي فوق الأبيض؛ وظيفته Accent فقط.</li>
+      <li>الشعار يظهر بلون أخضر واحد على الخلفية الفاتحة، أو أبيض مع Sand 500 على الخلفية الداكنة.</li>
+      <li>لا تمدد الرمز أو تغيّر نسبه أو تضيف ظلالًا داخله.</li>
+      <li>لا تستخدم رمز بيت جاهز أو Pin موقع بجانب الشعار؛ الرمز الحالي هو العلامة الأساسية.</li>
+      <li>ألوان Success / Warning / Danger لا تستخدم كزينة.</li>
+      <li>الخلفية الأساسية داخل المنصة Mist 75، والبطاقات White.</li>
+      <li>المساحات الداكنة تستخدم للـ Sidebar والـ Hero والـ Footer، وليس كل الواجهة.</li>
+      <li>الواجهة عربية RTL أولًا، ثم تُبنى نسخة LTR للإنجليزية.</li>
+      <li>الأرقام المالية المهمة تستخدم وزن 700–800 وتبقى عالية التباين.</li>
+      <li>التباين والوضوح يتقدمان دائمًا على الشكل الجمالي داخل الجداول والنماذج.</li>
+      <li>اسم العلامة يكتب «دارك» بالعربية. وفي السياق الإنجليزي يفضل DARAK لتجنب قراءة Dark.</li>
+    </ul>
+  </section>
+
+  <footer><span>دارك · Brand Identity v1.0 · September 2026</span><span>DARAK Property Operations Platform</span></footer>
+</div>
+</body>
+</html>

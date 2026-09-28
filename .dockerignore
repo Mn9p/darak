@@ -1,0 +1,15 @@
+**/node_modules
+**/.next
+**/.next-*
+**/.turbo
+**/*.db
+**/*.db-journal
+**/*.tsbuildinfo
+**/uploads
+**/backups
+**/.env
+**/.env.*
+!.env.example
+.git
+*.log
+brand/*.html

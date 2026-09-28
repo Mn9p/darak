@@ -1,0 +1,102 @@
+// ───────────────────────── Workflow Engine ─────────────────────────
+
+model Task {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  assignedToId   String?
+  assignedTo     User?        @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdById    String?
+  createdBy      User?        @relation("TaskCreator", fields: [createdById], references: [id])
+  priority       String       @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  status         String       @default("NEW") // NEW | ASSIGNED | IN_PROGRESS | WAITING | COMPLETED | CANCELLED
+  dueDate        DateTime?
+  completedAt    DateTime?
+  entityType     String? // PROPERTY | UNIT | CONTRACT | TENANT | OWNER | INSTALLMENT | MAINTENANCE | EXPENSE | DOCUMENT
+  entityId       String?
+  entityLabel    String?
+  tags           String       @default("")
+  checklist      String       @default("[]") // JSON [{text,done}]
+  isAutomated    Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, status])
+  @@index([assignedToId, status])
+  @@index([entityType, entityId])
+}
+
+model Document {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  type           String       @default("OTHER") // CONTRACT | ID | CR | DEED | INVOICE | RECEIPT | PHOTO | QUOTE | OTHER
+  entityType     String?
+  entityId       String?
+  entityLabel    String?
+  issueDate      DateTime?
+  expiryDate     DateTime?
+  uploadedById   String?
+  uploadedBy     User?        @relation(fields: [uploadedById], references: [id])
+  version        Int          @default(1)
+  tags           String       @default("")
+  visibility     String       @default("INTERNAL") // INTERNAL | OWNER | TENANT
+  url            String?
+  sizeKb         Int?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, expiryDate])
+  @@index([entityType, entityId])
+}
+
+model Notification {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  body           String?
+  channel        String       @default("IN_APP") // IN_APP | EMAIL | SMS | WHATSAPP | PUSH
+  severity       String       @default("INFO") // INFO | WARNING | DANGER | SUCCESS
+  entityType     String?
+  entityId       String?
+  href           String?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([userId, readAt])
+  @@index([organizationId, createdAt])
+  @@index([entityId])
+}
+
+model NotificationTemplate {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  event          String
+  channel        String       @default("SMS")
+  language       String       @default("ar")
+  body           String
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+}
+
+model NotificationRule {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  event          String // CONTRACT_EXPIRING | INSTALLMENT_DUE | INSTALLMENT_OVERDUE | BROKEN_PROMISE | UNIT_VACANT | MAINTENANCE_CRITICAL | DOCUMENT_EXPIRING | SYNC_FAILED | EXPENSE_APPROVAL
+  daysBefore     Int          @default(0)
+  channels       String       @default("IN_APP")
+  targetRoles    String       @default("OFFICE_MANAGER")
+  createTask     Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+}

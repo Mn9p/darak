@@ -1,0 +1,88 @@
+// ───────────────────────── Platform / Tenancy ─────────────────────────
+
+model Organization {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  crNumber    String?
+  vatNumber   String?
+  phone       String?
+  email       String?
+  city        String?
+  plan        String    @default("PROFESSIONAL") // STARTER | PROFESSIONAL | ENTERPRISE
+  status      String    @default("ACTIVE") // ACTIVE | SUSPENDED | TRIAL
+  unitsLimit  Int       @default(500)
+  usersLimit  Int       @default(25)
+  renewalDate DateTime?
+  settings    String    @default("{}") // JSON: approval limits, grace days, etc.
+  onboarding  String    @default("{}") // JSON checklist
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  branches       Branch[]
+  users          User[]
+  owners         Owner[]
+  properties     Property[]
+  units          Unit[]
+  tenants        Tenant[]
+  leads          Lead[]
+  contracts      Contract[]
+  installments   Installment[]
+  payments       Payment[]
+  expenses       Expense[]
+  statements     OwnerStatement[]
+  tasks          Task[]
+  documents      Document[]
+  notifications  Notification[]
+  templates      NotificationTemplate[]
+  rules          NotificationRule[]
+  auditLogs      AuditLog[]
+  integrations   Integration[]
+  savedViews     SavedView[]
+  importJobs     ImportJob[]
+  bankTxns       BankTransaction[]
+  collections    CollectionCase[]
+  supportTickets SupportTicket[]
+}
+
+model Branch {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  city           String?
+  address        String?
+  phone          String?
+  isMain         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  users      User[]
+  properties Property[]
+}
+
+/// Atomic per-organization counters behind nextCode() (PRP-0001, CNT-0001 …). Seeded from existing codes on first use.
+model Sequence {
+  organizationId String
+  entity         String
+  value          Int    @default(0)
+
+  @@id([organizationId, entity])
+}
+
+/// "Request an account" leads from the public landing page. Offices are created by the platform team only (invite-only).
+model AccessRequest {
+  id        String   @id @default(cuid())
+  name      String
+  company   String
+  phone     String
+  city      String?
+  message   String?
+  status    String   @default("NEW") // NEW | CONTACTED | CONVERTED | CLOSED
+  note      String?
+  ip        String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([phone])
+}

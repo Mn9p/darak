@@ -1,0 +1,125 @@
+// ───────────────────────── Core Property Engine ─────────────────────────
+
+model Owner {
+  id                  String       @id @default(cuid())
+  organizationId      String
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code                String
+  type                String       @default("INDIVIDUAL") // INDIVIDUAL | COMPANY
+  name                String
+  nationalId          String?
+  crNumber            String?
+  vatNumber           String?
+  representative      String?
+  phone               String?
+  email               String?
+  nationality         String?
+  address             String?
+  iban                String?
+  bankName            String?
+  managementFeePct    Float        @default(5)
+  agreementTerms      String?
+  managementStartDate DateTime?
+  accountManagerId    String?
+  accountManager      User?        @relation("OwnerAccountManager", fields: [accountManagerId], references: [id])
+  tags                String       @default("") // comma separated
+  notes               String?
+  status              String       @default("ACTIVE") // ACTIVE | INACTIVE | ARCHIVED
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  portalUser User?
+  ownerships PropertyOwnership[]
+  contracts  Contract[]
+  expenses   Expense[]
+  statements OwnerStatement[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([phone])
+}
+
+model Property {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branchId        String?
+  branch          Branch?      @relation(fields: [branchId], references: [id])
+  managerId       String?
+  manager         User?        @relation("PropertyManager", fields: [managerId], references: [id])
+  code            String
+  name            String
+  type            String // RESIDENTIAL_BUILDING | VILLA | COMPOUND | COMMERCIAL_BUILDING | OFFICES | SHOWROOM | WAREHOUSE | LAND | MIXED_USE | OTHER
+  city            String?
+  district        String?
+  street          String?
+  nationalAddress String?
+  lat             Float?
+  lng             Float?
+  deedNumber      String?
+  landArea        Float?
+  buildingArea    Float?
+  floors          Int?
+  buildYear       Int?
+  status          String       @default("ACTIVE") // ACTIVE | UNDER_MAINTENANCE | INACTIVE | ARCHIVED
+  tags            String       @default("")
+  customFields    String       @default("{}")
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  ownerships  PropertyOwnership[]
+  units       Unit[]
+  contracts   Contract[]
+  expenses    Expense[]
+  assignments PropertyAssignment[]
+  statements  OwnerStatement[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+}
+
+model PropertyOwnership {
+  id         String    @id @default(cuid())
+  propertyId String
+  property   Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  ownerId    String
+  owner      Owner     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  percentage Float     @default(100)
+  startDate  DateTime  @default(now())
+  endDate    DateTime? // null = current owner
+  createdAt  DateTime  @default(now())
+  @@index([propertyId])
+  @@index([ownerId])
+}
+
+model Unit {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  propertyId     String
+  property       Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  code           String
+  number         String
+  floor          String?
+  type           String // APARTMENT | STUDIO | VILLA | OFFICE | SHOP | WAREHOUSE | SHOWROOM | ROOM | OTHER
+  usage          String       @default("RESIDENTIAL") // RESIDENTIAL | COMMERCIAL
+  area           Float?
+  rooms          Int?
+  bathrooms      Int?
+  targetRent     Float?
+  currentRent    Float?
+  status         String       @default("VACANT") // VACANT | AVAILABLE | RESERVED | RENTED | UNDER_MAINTENANCE | UNAVAILABLE | ARCHIVED
+  tags           String       @default("")
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  contracts   Contract[]
+  leads       Lead[]
+  expenses    Expense[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([propertyId])
+}

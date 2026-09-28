@@ -1,0 +1,17 @@
+node_modules
+.next
+.next-*
+.turbo
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+packages/db/prisma/**/*.db
+packages/db/prisma/**/*.db-journal
+apps/web/test.db
+apps/web/uploads
+apps/web/backups
+uploads
+backups
+test.db

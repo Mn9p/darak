@@ -1,0 +1,30 @@
+{
+  "name": "darak-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DARAK — Property Management & Real Estate Operations Platform (monorepo)",
+  "packageManager": "pnpm@9.15.9",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "turbo run dev --filter=web",
+    "build": "turbo run build",
+    "start": "pnpm --filter web start",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "smoke": "pnpm --filter web smoke",
+    "db:generate": "pnpm --filter @darak/db generate",
+    "db:push": "pnpm --filter @darak/db push",
+    "db:validate": "pnpm --filter @darak/db validate",
+    "db:studio": "pnpm --filter @darak/db studio",
+    "db:migrate:deploy": "pnpm --filter @darak/db migrate:deploy",
+    "db:seed": "pnpm --filter web seed",
+    "db:seed:demo": "pnpm --filter web seed:demo",
+    "db:reset": "pnpm --filter @darak/db reset && pnpm --filter web seed",
+    "db:reset:demo": "pnpm --filter @darak/db reset && pnpm --filter web seed:demo",
+    "backup": "pnpm --filter @darak/db backup"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3"
+  }
+}

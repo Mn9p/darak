@@ -1,0 +1,73 @@
+// ───────────────────────── Integration Layer ─────────────────────────
+
+model Integration {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider       String // EJAR | WHATSAPP | SMS | EMAIL | BANK | ZATCA | PAYMENT_GATEWAY
+  name           String
+  status         String       @default("DISCONNECTED") // CONNECTED | DISCONNECTED | ERROR | SYNCING
+  lastSyncAt     DateTime?
+  lastError      String?
+  config         String       @default("{}")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  logs IntegrationLog[]
+
+  @@unique([organizationId, provider])
+}
+
+model IntegrationLog {
+  id            String      @id @default(cuid())
+  integrationId String
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  level         String      @default("INFO") // INFO | WARN | ERROR
+  message       String
+  payload       String?
+  createdAt     DateTime    @default(now())
+  @@index([integrationId, createdAt])
+}
+
+model SavedView {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module         String
+  name           String
+  query          String // URL query string
+  isShared       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+}
+
+model ImportJob {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  entityType     String // PROPERTIES | UNITS | OWNERS | TENANTS | CONTRACTS | INSTALLMENTS | PAYMENTS
+  fileName       String
+  totalRows      Int          @default(0)
+  successRows    Int          @default(0)
+  failedRows     Int          @default(0)
+  errors         String       @default("[]")
+  status         String       @default("COMPLETED") // PENDING | VALIDATING | PREVIEW | COMPLETED | FAILED
+  createdAt      DateTime     @default(now())
+}
+
+model SupportTicket {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  subject        String
+  body           String
+  status         String       @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED | CLOSED
+  priority       String       @default("MEDIUM")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}

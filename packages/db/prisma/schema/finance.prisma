@@ -1,0 +1,155 @@
+// ───────────────────────── Financial Engine ─────────────────────────
+
+model Payment {
+  id                   String       @id @default(cuid())
+  organizationId       String
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code                 String
+  tenantId             String
+  tenant               Tenant       @relation(fields: [tenantId], references: [id])
+  contractId           String?
+  contract             Contract?    @relation(fields: [contractId], references: [id])
+  paidAt               DateTime
+  amount               Float
+  method               String       @default("BANK_TRANSFER") // BANK_TRANSFER | CARD | GATEWAY | CASH | CHEQUE | OTHER
+  reference            String?
+  bank                 String?
+  attachmentUrl        String?
+  status               String       @default("RECORDED") // RECORDED | APPROVED | REVERSED | RETURNED
+  reconciliationStatus String       @default("UNMATCHED") // MATCHED | SUGGESTED | UNMATCHED | DUPLICATE | NEEDS_REVIEW
+  recordedById         String?
+  recordedBy           User?        @relation(fields: [recordedById], references: [id])
+  notes                String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  allocations PaymentAllocation[]
+  bankTxn     BankTransaction?
+
+  @@unique([organizationId, code])
+  @@index([organizationId, paidAt])
+  @@index([tenantId])
+  @@index([contractId])
+}
+
+model PaymentAllocation {
+  id            String      @id @default(cuid())
+  paymentId     String
+  payment       Payment     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  installmentId String
+  installment   Installment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+  amount        Float
+  createdAt     DateTime    @default(now())
+
+  @@unique([paymentId, installmentId])
+  @@index([installmentId])
+}
+
+model BankTransaction {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  date           DateTime
+  amount         Float
+  reference      String?
+  description    String?
+  bank           String?
+  status         String       @default("UNMATCHED") // MATCHED | SUGGESTED | UNMATCHED | DUPLICATE | NEEDS_REVIEW
+  paymentId      String?      @unique
+  payment        Payment?     @relation(fields: [paymentId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, status])
+}
+
+model Expense {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  propertyId     String
+  property       Property     @relation(fields: [propertyId], references: [id])
+  unitId         String?
+  unit           Unit?        @relation(fields: [unitId], references: [id])
+  ownerId        String?
+  owner          Owner?       @relation(fields: [ownerId], references: [id])
+  payee          String? // الجهة المستفيدة (free text)
+  category       String // MAINTENANCE | ELECTRICITY | WATER | CLEANING | SECURITY | FEES | COMMISSIONS | SERVICES | MANAGEMENT | OTHER
+  description    String
+  amount         Float
+  vatAmount      Float        @default(0)
+  date           DateTime
+  invoiceNumber  String?
+  method         String       @default("BANK_TRANSFER")
+  approvalStatus String       @default("PENDING") // PENDING | APPROVED | REJECTED
+  approvedById   String?
+  approvedBy     User?        @relation("ExpenseApprover", fields: [approvedById], references: [id])
+  approvedAt     DateTime?
+  createdById    String?
+  createdBy      User?        @relation("ExpenseCreator", fields: [createdById], references: [id])
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId, approvalStatus])
+  @@index([organizationId, date])
+  @@index([propertyId])
+  @@index([ownerId])
+}
+
+model OwnerStatement {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code            String
+  ownerId         String
+  owner           Owner        @relation(fields: [ownerId], references: [id])
+  propertyId      String?
+  property        Property?    @relation(fields: [propertyId], references: [id])
+  periodStart     DateTime
+  periodEnd       DateTime
+  collectedRent   Float        @default(0)
+  managementFees  Float        @default(0)
+  expenses        Float        @default(0)
+  otherDeductions Float        @default(0)
+  netDue          Float        @default(0)
+  status          String       @default("DRAFT") // DRAFT | UNDER_REVIEW | APPROVED | PAID | CLOSED
+  paidAt          DateTime?
+  notes           String?
+  /// Frozen lines, written when the statement leaves DRAFT (see OwnerStatementLine).
+  lines           OwnerStatementLine[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([ownerId, periodStart])
+  @@index([organizationId, status])
+}
+
+/// One frozen line of a locked owner statement: the owner's share paid for one source row (a payment allocation or an
+/// expense). Later statements pay only the difference between the current truth and the sum of frozen lines per source,
+/// so late entries, bounced cheques and edits settle in the next statement and nothing is paid twice.
+model OwnerStatementLine {
+  id          String         @id @default(cuid())
+  statementId String
+  statement   OwnerStatement @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  ownerId     String
+  propertyId  String
+  kind        String // RENT | EXPENSE
+  refId       String // PaymentAllocation.id (RENT) or Expense.id (EXPENSE)
+  /// ownerId:kind:refId:n (n = frozen lines already on this source). Unique, so two statements locked at the same time cannot both include the same money.
+  ledgerKey   String         @unique
+  date        DateTime
+  label       String
+  category    String?
+  gross       Float          @default(0) // allocation amount / expense total incl. VAT
+  amount      Float // owner's share (rent collected or expense charged); negative = correction of an earlier statement
+  fee         Float          @default(0) // management fee on RENT lines
+  carried     Boolean        @default(false) // dated before this statement's period, or corrects an earlier statement
+  note        String?
+  createdAt   DateTime       @default(now())
+
+  @@index([statementId])
+  @@index([ownerId, refId])
+}

@@ -1,0 +1,59 @@
+// ───────────────────────── Tenants & Leasing ─────────────────────────
+
+model Tenant {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code            String
+  type            String       @default("INDIVIDUAL") // INDIVIDUAL | COMPANY
+  name            String
+  nationalId      String?
+  idExpiry        DateTime?
+  crNumber        String?
+  vatNumber       String?
+  representative  String?
+  phone           String?
+  email           String?
+  address         String?
+  employer        String?
+  altContactName  String?
+  altContactPhone String?
+  riskLevel       String       @default("LOW") // LOW | MEDIUM | HIGH
+  tags            String       @default("")
+  notes           String?
+  status          String       @default("ACTIVE")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  portalUser   User?
+  contracts    Contract[]
+  installments Installment[]
+  payments     Payment[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([phone])
+}
+
+model Lead {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  unitId         String?
+  unit           Unit?        @relation(fields: [unitId], references: [id])
+  name           String
+  phone          String?
+  email          String?
+  source         String       @default("WALK_IN") // WALK_IN | PHONE | WEBSITE | REFERRAL | AQAR | HARAJ | OTHER
+  stage          String       @default("LEAD") // LEAD | VIEWING | NEGOTIATION | APPLICATION | APPROVED | CONTRACTING | RENTED | LOST
+  viewingDate    DateTime?
+  offerAmount    Float?
+  assignedToId   String?
+  assignedTo     User?        @relation(fields: [assignedToId], references: [id])
+  lostReason     String?
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, stage])
+}

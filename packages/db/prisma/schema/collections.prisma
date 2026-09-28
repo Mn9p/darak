@@ -1,0 +1,40 @@
+// ───────────────────────── Collection Engine ─────────────────────────
+
+model CollectionCase {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  installmentId  String       @unique
+  installment    Installment  @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+  collectorId    String?
+  collector      User?        @relation(fields: [collectorId], references: [id])
+  followUpStatus String       @default("NOT_STARTED") // NOT_STARTED | CONTACTING | NO_RESPONSE | CONTACTED | PROMISE_TO_PAY | BROKEN_PROMISE | PARTIAL_PAYMENT | EXTENSION_REQUESTED | DISPUTED | ESCALATED | PAID | CLOSED
+  priority       Int          @default(0) // computed score
+  promiseAmount  Float?
+  promiseDate    DateTime?
+  brokenPromises Int          @default(0)
+  lastActionAt   DateTime?
+  nextAction     String?
+  nextActionDate DateTime?
+  escalatedAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  actions CollectionAction[]
+
+  @@index([organizationId, followUpStatus])
+  @@index([collectorId])
+}
+
+model CollectionAction {
+  id        String         @id @default(cuid())
+  caseId    String
+  case      CollectionCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  type      String // SMS | CALL | WHATSAPP | EMAIL | VISIT | NOTE | PROMISE | ESCALATION | PAYMENT | SYSTEM
+  outcome   String? // NO_ANSWER | ANSWERED | PROMISED | REFUSED | DISPUTED | PAID
+  note      String?
+  byUserId  String?
+  byUser    User?          @relation(fields: [byUserId], references: [id])
+  createdAt DateTime       @default(now())
+  @@index([caseId, createdAt])
+}
