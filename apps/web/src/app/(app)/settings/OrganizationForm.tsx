@@ -67,7 +67,7 @@ export function OrganizationForm({ org, settings }: { org: Record<string, string
               <Field label="الاعتماد التلقائي (ر.س)" name="autoApproveLimit" help="تُعتمد المصروفات تلقائيًا حتى هذا المبلغ.">
                 <Input name="autoApproveLimit" type="number" min={0} defaultValue={String(settings.autoApproveLimit ?? 500)} />
               </Field>
-              <Field label="حد اعتماد المحاسب (ر.س)" name="managerApprovalLimit" help="يعتمد المحاسب المصروفات حتى هذا المبلغ، وما فوقه يعتمده مدير المكتب.">
+              <Field label="حد اعتماد الموظفين للمصروفات (ر.س)" name="managerApprovalLimit" help="الموظف الذي يملك صلاحية الاعتماد يعتمد المصروفات حتى هذا المبلغ، وما فوقه يعتمده صاحب الحساب.">
                 <Input name="managerApprovalLimit" type="number" min={0} defaultValue={String(settings.managerApprovalLimit ?? 5000)} />
               </Field>
             </FormGrid>

@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { assertCan } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
-import { NOTIFICATION_EVENTS, NOTIFICATION_CHANNELS, ROLES } from "@/lib/constants";
+import { NOTIFICATION_EVENTS, NOTIFICATION_CHANNELS, RULE_AUDIENCES } from "@/lib/constants";
 import { safeJson } from "@/lib/format";
 import type { FormState } from "@/components/ui";
 
@@ -56,7 +56,7 @@ const ruleSchema = z.object({
 
 function parseRule(fd: FormData) {
   const channels = fd.getAll("channels").map(String).filter((c) => c in NOTIFICATION_CHANNELS);
-  const roles = fd.getAll("targetRoles").map(String).filter((r) => r in ROLES);
+  const roles = fd.getAll("targetRoles").map(String).filter((r) => r in RULE_AUDIENCES);
   return ruleSchema.safeParse({
     name: fd.get("name"),
     event: fd.get("event"),

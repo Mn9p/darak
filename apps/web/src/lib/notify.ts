@@ -1,6 +1,8 @@
 import { db } from "./db";
 import { sendMessage, type Channel, type SendResult } from "./channels";
 import { logger } from "./logger";
+import { can, type Permission } from "./permissions";
+import { activeTeam, defaultAssignee } from "./team";
 
 export type ExternalChannel = Channel;
 
@@ -16,7 +18,10 @@ export interface ExternalDelivery {
 interface NotifyInput {
   organizationId: string;
   userIds?: string[];
-  roles?: string[];
+  /** Every active account owner. */
+  owners?: boolean;
+  /** Every active team member holding one of these permissions (owners included — they hold them all). */
+  audience?: Permission[];
   title: string;
   body?: string;
   severity?: "INFO" | "WARNING" | "DANGER" | "SUCCESS";
@@ -28,21 +33,22 @@ interface NotifyInput {
   external?: ExternalDelivery;
 }
 
+/** User ids addressed by owners/audience. */
+async function recipients(organizationId: string, owners?: boolean, audience?: Permission[]) {
+  if (!owners && !audience?.length) return [];
+  const team = await activeTeam(organizationId);
+  return team.filter((u) => (owners && u.role === "ACCOUNT_OWNER") || (audience?.length && audience.some((p) => can(u, p)))).map((u) => u.id);
+}
+
 /**
- * Creates in-app notifications for specific users and/or every active user with the given roles.
+ * Creates in-app notifications for specific users and/or the team members addressed by owners/audience.
  * When `external` is given, the same message is also sent through the outbound channels
  * (phone for SMS/WHATSAPP, email for EMAIL). External failures are logged, never thrown.
  * Returns the number of in-app recipients.
  */
 export async function notify(input: NotifyInput) {
   const ids = new Set(input.userIds ?? []);
-  if (input.roles?.length) {
-    const users = await db.user.findMany({
-      where: { organizationId: input.organizationId, role: { in: input.roles }, status: "ACTIVE" },
-      select: { id: true },
-    });
-    users.forEach((u) => ids.add(u.id));
-  }
+  for (const id of await recipients(input.organizationId, input.owners, input.audience)) ids.add(id);
   if (ids.size > 0) {
     await db.notification.createMany({
       data: [...ids].map((userId) => ({
@@ -99,12 +105,12 @@ export async function deliverExternal(
   return results;
 }
 
-/** Emails every active user holding one of the given roles (e.g. office managers). Never throws. */
-export async function emailRoles(input: { organizationId: string; roles: string[]; subject: string; body: string; entityType?: string; entityId?: string }) {
+/** Emails every active account owner that has an email address. Never throws. */
+export async function emailOwners(input: { organizationId: string; subject: string; body: string; entityType?: string; entityId?: string }) {
   let sent = 0;
   try {
     const users = await db.user.findMany({
-      where: { organizationId: input.organizationId, role: { in: input.roles }, status: "ACTIVE", email: { not: null } },
+      where: { organizationId: input.organizationId, role: "ACCOUNT_OWNER", status: "ACTIVE", email: { not: null } },
       select: { email: true },
     });
     for (const u of users) {
@@ -123,7 +129,8 @@ interface AutoTaskInput {
   title: string;
   description?: string;
   assignedToId?: string | null;
-  role?: string; // fallback: first active user with this role
+  /** Without assignedToId: the first active employee holding this permission, otherwise an account owner. */
+  assignee?: Permission | "OWNER";
   priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   dueDate?: Date | null;
   entityType?: string;
@@ -146,12 +153,8 @@ export async function autoTask(input: AutoTaskInput) {
   if (existing) return existing.id;
 
   let assignedToId = input.assignedToId ?? null;
-  if (!assignedToId && input.role) {
-    const u = await db.user.findFirst({
-      where: { organizationId: input.organizationId, role: input.role, status: "ACTIVE" },
-      select: { id: true },
-    });
-    assignedToId = u?.id ?? null;
+  if (!assignedToId && input.assignee) {
+    assignedToId = await defaultAssignee(input.organizationId, input.assignee === "OWNER" ? undefined : input.assignee);
   }
   const t = await db.task.create({
     data: {

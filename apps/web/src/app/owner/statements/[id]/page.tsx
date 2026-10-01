@@ -167,7 +167,7 @@ export default async function OwnerStatementPage({ params }: { params: Promise<{
             </Card>
           )}
           <Card tone="dark" title="كيف يُحسب كشف الحساب؟">
-            <ul className="space-y-1.5 text-[12.5px] text-[#C6D2CE]">
+            <ul className="space-y-1.5 text-[12.5px] text-on-dark-2">
               <li>• تُحسب حصتك من كل دفعة حسب نسبة ملكيتك في تاريخ الدفع.</li>
               <li>• تُخصم أتعاب الإدارة حسب النسبة المتفق عليها في العقود.</li>
               <li>• تُخصم المصروفات المعتمدة فقط (بعد اعتماد المكتب).</li>

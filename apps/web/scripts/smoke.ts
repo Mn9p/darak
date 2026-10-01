@@ -48,7 +48,7 @@ async function ids() {
     db.task.findFirst({ where: { organizationId: oid } }),
     db.document.findFirst({ where: { organizationId: oid } }),
     db.lead.findFirst({ where: { organizationId: oid } }),
-    db.user.findFirst({ where: { organizationId: oid, role: "COLLECTOR" } }),
+    db.user.findFirst({ where: { organizationId: oid, role: "EMPLOYEE", permissions: { contains: "collections.manage" } } }),
     db.organization.findFirst({ where: { slug: "almadar" } }),
   ]);
   // An access request (public "request an account" form) so /admin/requests and the prefilled office form have a row to show.

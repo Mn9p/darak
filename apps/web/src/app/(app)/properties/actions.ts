@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
-import { assertCan, can, propertyScope } from "@/lib/permissions";
+import { assertCan, can, isScoped, propertyScope } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { nextCode } from "@/lib/codes";
 import type { FormState } from "@/components/ui";
@@ -74,7 +74,14 @@ export async function createProperty(_prev: FormState, formData: FormData): Prom
     }
     const code = await nextCode(user.organizationId, "property");
     const p = await db.property.create({
-      data: { ...parsed.data, organizationId: user.organizationId, code, ownerships: { create: ownerships.map((o) => ({ ...o, startDate: new Date() })) } },
+      data: {
+        ...parsed.data,
+        organizationId: user.organizationId,
+        code,
+        ownerships: { create: ownerships.map((o) => ({ ...o, startDate: new Date() })) },
+        // An employee limited to assigned properties keeps access to the property they just added.
+        ...(isScoped(user) ? { assignments: { create: [{ userId: user.id }] } } : {}),
+      },
     });
     await audit({ user, action: "CREATE", entityType: "PROPERTY", entityId: p.id, entityLabel: p.name, newValue: parsed.data });
     revalidatePath("/properties");

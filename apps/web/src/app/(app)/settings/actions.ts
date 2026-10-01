@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { requireStaff, loginAllowed } from "@/lib/auth";
 import { assertCan } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
-import { notify, emailRoles } from "@/lib/notify";
+import { notify, emailOwners } from "@/lib/notify";
 import { DEFAULT_ORG_SETTINGS } from "@/lib/constants";
 import { safeJson } from "@/lib/format";
 import { normalizePhone, displayPhone } from "@/lib/phone";
@@ -288,11 +288,10 @@ export async function createPdplRequest(_prev: FormState, formData: FormData): P
       data: { organizationId: user.organizationId, userId: user.id, subject: `[PDPL] ${type} — ${subject}`.slice(0, 180), body, priority: "HIGH", status: "OPEN" },
     });
     await audit({ user, action: "CREATE", entityType: "SUPPORT_TICKET", entityId: t.id, entityLabel: t.subject, newValue: { type, priority: "HIGH" } });
-    await notify({ organizationId: user.organizationId, roles: ["OFFICE_MANAGER"], title: `طلب صاحب بيانات (PDPL): ${type}`, body: subject, severity: "WARNING", entityType: "SUPPORT_TICKET", entityId: t.id, href: "/help" });
+    await notify({ organizationId: user.organizationId, owners: true, title: `طلب صاحب بيانات (PDPL): ${type}`, body: subject, severity: "WARNING", entityType: "SUPPORT_TICKET", entityId: t.id, href: "/help" });
     // Email office managers — PDPL requests have a statutory response window. Never throws.
-    await emailRoles({
+    await emailOwners({
       organizationId: user.organizationId,
-      roles: ["OFFICE_MANAGER"],
       subject: `طلب صاحب بيانات (PDPL): ${type} — ${subject}`,
       body: `ورد طلب صاحب بيانات من ${user.name}.\n\nالنوع: ${type}\nالموضوع: ${subject}\n\n${body}\n\nالمدة النظامية للرد: 30 يومًا كحد أقصى.\nللمتابعة: ${process.env.APP_URL ?? ""}/help?tab=tickets`,
       entityType: "SUPPORT_TICKET",
@@ -318,7 +317,7 @@ export async function requestUpgrade(formData: FormData) {
       data: { organizationId: user.organizationId, userId: user.id, subject: `طلب ترقية الخطة إلى ${plan}`, body: `المكتب: ${org.name}\nالخطة الحالية: ${org.plan}\nالخطة المطلوبة: ${plan}`, priority: "MEDIUM" },
     });
     await audit({ user, action: "CREATE", entityType: "SUPPORT_TICKET", entityId: t.id, entityLabel: t.subject, newValue: { from: org.plan, to: plan } });
-    await notify({ organizationId: user.organizationId, roles: ["OFFICE_MANAGER"], title: "تم إرسال طلب ترقية الخطة", body: `سيتواصل فريق دارك لإتمام الترقية إلى ${plan}.`, severity: "SUCCESS", href: "/help" });
+    await notify({ organizationId: user.organizationId, owners: true, title: "تم إرسال طلب ترقية الخطة", body: `سيتواصل فريق دارك لإتمام الترقية إلى ${plan}.`, severity: "SUCCESS", href: "/help" });
     revalidatePath("/settings/subscription");
   } catch (e) {
     await failFromError(e);
@@ -433,7 +432,7 @@ export async function confirmPhoneChangeAction(_prev: PhoneChangeState, formData
     logger.info("profile.phone_changed", { userId: user.id, from: maskPhone(old.phone), to: maskPhone(phone), sessionsRevoked: revoked.count });
 
     // Tell the old number — if it was not the account holder, this is their only signal. Never blocks the change.
-    await sendMessage({ channel: "SMS", to: old.phone, body: "تم تغيير رقم الدخول لحسابك في دارك. إن لم تكن أنت من قام بذلك، تواصل مع مدير مكتبك فورًا.", entityType: "USER", entityId: user.id }).catch(() => {});
+    await sendMessage({ channel: "SMS", to: old.phone, body: "تم تغيير رقم الدخول لحسابك في دارك. إن لم تكن أنت من قام بذلك، تواصل مع صاحب الحساب في مكتبك فورًا.", entityType: "USER", entityId: user.id }).catch(() => {});
 
     revalidatePath("/settings/profile");
     revalidatePath("/", "layout");

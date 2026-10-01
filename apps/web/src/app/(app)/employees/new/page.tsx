@@ -3,12 +3,12 @@ import { db } from "@/lib/db";
 import { assertCan } from "@/lib/permissions";
 import { STAFF_ROLES } from "@/lib/constants";
 import { PageHeader, Alert } from "@/components/ui";
-import { EmployeeForm } from "../EmployeeForm";
+import { TeamForm } from "../TeamForm";
 import { createEmployee } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewEmployeePage() {
+export default async function NewMemberPage() {
   const user = await requireStaff();
   assertCan(user, "employees.manage");
   const org = user.organizationId;
@@ -22,15 +22,15 @@ export default async function NewEmployeePage() {
   const limit = orgRow?.usersLimit ?? 0;
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title="إضافة موظف" subtitle={`المستخدمون: ${staffCount} من ${limit} في باقتك.`} breadcrumbs={[{ label: "الموظفون", href: "/employees" }, { label: "موظف جديد" }]} />
+      <PageHeader title="إضافة عضو إلى الفريق" subtitle={`المقاعد المستخدمة: ${staffCount} من ${limit} في باقتك.`} breadcrumbs={[{ label: "فريق العمل", href: "/employees" }, { label: "عضو جديد" }]} />
       {staffCount >= limit && (
         <div className="mb-4">
           <Alert tone="warning" title="وصلت لحد المستخدمين">
-            عطّل مستخدمًا غير نشط أو قم بترقية الباقة من الإعدادات لإضافة موظف جديد.
+            عطّل عضوًا غير نشط أو قم بترقية الباقة من الإعدادات لإضافة عضو جديد.
           </Alert>
         </div>
       )}
-      <EmployeeForm action={createEmployee} branches={branches} managers={managers} properties={properties} />
+      <TeamForm action={createEmployee} branches={branches} managers={managers} properties={properties} />
     </div>
   );
 }

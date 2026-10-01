@@ -21,7 +21,9 @@ const OPEN_CASE = ["OPEN", "PROMISE_TO_PAY", "BROKEN_PROMISE", "DISPUTED", "ESCA
 export default async function DashboardPage() {
   const user = await requireStaff();
   await runEngineThrottled(user.organizationId);
-  if (user.role === "COLLECTOR") return <CollectorDashboard org={user.organizationId} userId={user.id} name={user.name} />;
+  // An employee whose work is collection (not contracts, not owner statements) gets a personal "my claims" home.
+  const collectionFocused = user.role === "EMPLOYEE" && can(user, "collections.manage") && !can(user, "contracts.manage") && !can(user, "statements.view");
+  if (collectionFocused) return <CollectorDashboard org={user.organizationId} userId={user.id} name={user.name} canRecord={can(user, "payments.manage")} />;
   return <ManagerDashboard user={user} />;
 }
 
@@ -146,8 +148,9 @@ async function ManagerDashboard({ user }: { user: Awaited<ReturnType<typeof requ
         }
       />
 
-      {/* 1. Where is the money */}
+      {/* 1. Where is the money — each card only for those allowed to see what it counts */}
       <StatGrid cols={4}>
+        {seeCollections && (
         <StatCard
           label="المحصل هذا الشهر"
           value={totals.dueMonth ? money(totals.paidMonth) : "—"}
@@ -164,25 +167,29 @@ async function ManagerDashboard({ user }: { user: Awaited<ReturnType<typeof requ
           href={seeCollections ? "/collections" : undefined}
           tone={totals.dueMonth && rate < 75 ? "warning" : undefined}
         />
-        <StatCard label="المتأخر" value={money(totals.overdueAmt)} sub={overdueCount ? `${num(overdueCount)} دفعة${totals.enforceable ? ` · ${num(totals.enforceable)} تجاوزت المهلة` : ""}` : "لا توجد متأخرات"} tone={totals.overdueAmt > 0 ? "danger" : undefined} href={seeCollections ? "/collections" : undefined} />
+        )}
+        {seeCollections && <StatCard label="المتأخر" value={money(totals.overdueAmt)} sub={overdueCount ? `${num(overdueCount)} دفعة${totals.enforceable ? ` · ${num(totals.enforceable)} تجاوزت المهلة` : ""}` : "لا توجد متأخرات"} tone={totals.overdueAmt > 0 ? "danger" : undefined} href="/collections" />}
         {seeOwnerDue ? (
           <StatCard label="مستحق تحويله للملاك" value={money(ownerDue._sum.netDue ?? 0)} sub={ownerDue._count ? `${num(ownerDue._count)} كشف حساب معتمد` : "لا كشوف معتمدة بانتظار التحويل"} href="/statements?status=APPROVED" />
         ) : (
-          <StatCard label="عقود تنتهي خلال 30 يومًا" value={num(expiring30)} sub="بلا قرار تجديد" tone={expiring30 > 0 ? "warning" : undefined} href={can(user, "contracts.view") ? "/contracts?expiring=30" : undefined} />
+          can(user, "contracts.view") && <StatCard label="عقود تنتهي خلال 30 يومًا" value={num(expiring30)} sub="بلا قرار تجديد" tone={expiring30 > 0 ? "warning" : undefined} href="/contracts?expiring=30" />
         )}
+        {!seeCollections && <StatCard label="مهامي المفتوحة" value={num(myTasks.length)} sub={myTasks.length ? "الأقرب موعدًا في الأسفل" : "لا مهام مفتوحة"} href={can(user, "tasks.view") ? "/tasks" : undefined} />}
+        {can(user, "units.view") && (
         <StatCard
           label="وحدات شاغرة"
           value={totalUnits ? `${num(vacant)} / ${num(totalUnits)}` : "—"}
           sub={!totalUnits ? "لا توجد وحدات مسجلة" : vacant ? `إيجار مفقود ≈ ${money(lostRentMonthly)} ر.س شهريًا · إشغال ${pct(occupancy, 0)}` : `إشغال ${pct(occupancy, 0)}`}
           tone={vacant > 0 ? "warning" : undefined}
-          href={can(user, "units.view") ? "/units?status=VACANT" : undefined}
+          href="/units?status=VACANT"
           dark
         />
+        )}
       </StatGrid>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
         {/* 2. What must I do today */}
-        <Card title="عمل اليوم" subtitle={today.length ? `${num(today.length)} بند` : undefined} padded={false} className="xl:col-span-2">
+        <Card title="عمل اليوم" subtitle={today.length ? `${num(today.length)} بند` : undefined} padded={false} className={seeCollections ? "xl:col-span-2" : "xl:col-span-3"}>
           {today.length === 0 ? (
             <EmptyState title="لا شيء عالق اليوم" description="الوعود والمتابعات والاعتمادات كلها منجزة." />
           ) : (
@@ -204,14 +211,17 @@ async function ManagerDashboard({ user }: { user: Awaited<ReturnType<typeof requ
           )}
         </Card>
 
-        <Suspense fallback={<AssistantCardSkeleton title="ملخص اليوم" tone="dark" />}>
-          <DailyBrief user={user} expiring30={expiring30} vacant={vacant} pendingExpenses={pendingExpenses} brokenPromises={broken} />
-        </Suspense>
+        {seeCollections && (
+          <Suspense fallback={<AssistantCardSkeleton title="ملخص اليوم" tone="dark" />}>
+            <DailyBrief user={user} expiring30={expiring30} vacant={vacant} pendingExpenses={pendingExpenses} brokenPromises={broken} />
+          </Suspense>
+        )}
       </div>
 
       {/* 3. Which property hurts */}
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
-        <Card title="العقارات" subtitle="الأسوأ تحصيلًا أولًا" actions={seeCollections ? <Link href="/collections" className="link text-xs">كل العقارات</Link> : undefined} className="xl:col-span-2" padded={false}>
+        {seeCollections && (
+        <Card title="العقارات" subtitle="الأسوأ تحصيلًا أولًا" actions={<Link href="/collections" className="link text-xs">كل العقارات</Link>} className="xl:col-span-2" padded={false}>
           {worst.length === 0 ? (
             <EmptyState title="لا توجد مستحقات هذا الشهر" />
           ) : (
@@ -259,9 +269,11 @@ async function ManagerDashboard({ user }: { user: Awaited<ReturnType<typeof requ
             </Table>
           )}
         </Card>
+        )}
 
-        <div className="space-y-4">
-          <Card title="عقود تنتهي خلال 90 يومًا" actions={can(user, "contracts.view") ? <Link href="/contracts?expiring=90" className="link text-xs">الكل</Link> : undefined} padded={false}>
+        <div className={`space-y-4 ${seeCollections ? "" : "xl:col-span-3 xl:grid xl:grid-cols-2 xl:gap-4 xl:space-y-0"}`}>
+          {can(user, "contracts.view") && (
+          <Card title="عقود تنتهي خلال 90 يومًا" actions={<Link href="/contracts?expiring=90" className="link text-xs">الكل</Link>} padded={false}>
             {expiringList.length === 0 ? (
               <EmptyState title="لا توجد عقود تنتهي قريبًا" />
             ) : (
@@ -288,6 +300,7 @@ async function ManagerDashboard({ user }: { user: Awaited<ReturnType<typeof requ
               </ul>
             )}
           </Card>
+          )}
           {myTasks.length > 0 && (
             <Card title="مهامي" actions={<Link href="/tasks" className="link text-xs">الكل</Link>} padded={false}>
               <ul className="divide-y divide-line">
@@ -305,8 +318,8 @@ async function ManagerDashboard({ user }: { user: Awaited<ReturnType<typeof requ
         </div>
       </div>
 
-      {topCases.length > 0 && (
-        <Card title="أولويات التحصيل" subtitle="ابدأ بهؤلاء" actions={seeCollections ? <Link href="/collections?view=list" className="link text-xs">كل المطالبات</Link> : undefined} className="mt-4" padded={false}>
+      {seeCollections && topCases.length > 0 && (
+        <Card title="أولويات التحصيل" subtitle="ابدأ بهؤلاء" actions={<Link href="/collections?view=list" className="link text-xs">كل المطالبات</Link>} className="mt-4" padded={false}>
           <Table density="compact">
             <thead>
               <tr>
@@ -356,7 +369,7 @@ async function ManagerDashboard({ user }: { user: Awaited<ReturnType<typeof requ
 
 /* ─────────────────────────── Collector ─────────────────────────── */
 
-async function CollectorDashboard({ org, userId, name }: { org: string; userId: string; name: string }) {
+async function CollectorDashboard({ org, userId, name, canRecord }: { org: string; userId: string; name: string; canRecord: boolean }) {
   const now = new Date();
   const [cases, collected] = await Promise.all([
     db.collectionCase.findMany({
@@ -373,7 +386,7 @@ async function CollectorDashboard({ org, userId, name }: { org: string; userId: 
 
   return (
     <>
-      <PageHeader title={`${greeting()}، ${name.split(" ")[0]}`} subtitle={`${date(now)} · ${dateHijri(now)}`} actions={<Link href="/payments/new" className="btn btn-primary btn-sm">تسجيل سند قبض</Link>} />
+      <PageHeader title={`${greeting()}، ${name.split(" ")[0]}`} subtitle={`${date(now)} · ${dateHijri(now)}`} actions={canRecord ? <Link href="/payments/new" className="btn btn-primary btn-sm">تسجيل سند قبض</Link> : undefined} />
       <StatGrid cols={4}>
         <StatCard label="للمتابعة اليوم" value={num(todayCases.length)} tone={todayCases.length ? "warning" : undefined} sub="وعود ومتابعات مجدولة وحالات لم يُتواصل معها" />
         <StatCard label="المتأخر في مطالباتي" value={money(overdueAmt)} tone={overdueAmt > 0 ? "danger" : undefined} sub={`${num(cases.length)} مطالبة مفتوحة`} />

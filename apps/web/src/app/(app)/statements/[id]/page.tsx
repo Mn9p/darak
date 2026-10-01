@@ -36,7 +36,7 @@ export default async function StatementPage({ params }: { params: Promise<{ id: 
   ]);
 
   const canManage = can(user, "statements.manage");
-  const canApprove = canManage && ["OFFICE_MANAGER", "ACCOUNTANT", "SUPER_ADMIN"].includes(user.role);
+  const canApprove = can(user, "statements.approve");
   // Drafts are recomputed live; a locked statement shows its frozen lines (later movements settle in the next statement).
   const drift = s.status === "DRAFT" && (Math.abs(figures.collectedRent - s.collectedRent) > 0.01 || Math.abs(figures.expenses - s.expenses) > 0.01 || Math.abs(figures.managementFees - s.managementFees) > 0.01);
   const paymentLines = [...figures.lines].sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -273,7 +273,7 @@ export default async function StatementPage({ params }: { params: Promise<{ id: 
               <StatusTag value={s.status} map={STATEMENT_STATUS} />
               {s.paidAt && <span className="text-[12px] text-muted">حُوّل {datetime(s.paidAt)}</span>}
             </div>
-            {!canManage && <Alert tone="neutral">عرض فقط — إدارة التسويات متاحة للمحاسب ومدير المكتب.</Alert>}
+            {!canManage && <Alert tone="neutral">عرض فقط — إدارة التسويات تتطلب صلاحية إعداد الكشوف.</Alert>}
             {canManage && (
               <div className="space-y-2">
                 {s.status === "DRAFT" && (
@@ -295,7 +295,7 @@ export default async function StatementPage({ params }: { params: Promise<{ id: 
                         اعتماد كشف الحساب
                       </ActionButton>
                     ) : (
-                      <Alert tone="info">بانتظار اعتماد مدير المكتب أو المحاسب.</Alert>
+                      <Alert tone="info">بانتظار اعتماد صاحب الحساب أو موظف يملك صلاحية اعتماد الكشوف.</Alert>
                     )}
                     <ActionButton action={backToDraft} hidden={{ id: s.id }} className="btn btn-ghost btn-sm w-full">
                       إعادة إلى مسودة

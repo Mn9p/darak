@@ -4,6 +4,7 @@ import { supportContact } from "@/lib/support";
 import { AuthShell } from "@/components/AuthShell";
 import { getCurrentUser, homeForRole } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { availableTestAccounts } from "@/lib/test-accounts";
 
 export const metadata = { title: "تسجيل الدخول" };
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (user) redirect(homeForRole(user.role, Boolean(user.organizationId)));
   const { next, expired, phone } = await searchParams;
   const support = supportContact();
+  const testAccounts = await availableTestAccounts();
 
   return (
     <AuthShell
@@ -29,7 +31,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         </>
       }
     >
-      <LoginForm next={next} expired={expired === "1"} startPhone={phone} support={{ whatsapp: support.whatsapp, phoneDisplay: support.phoneDisplay, email: support.email }} />
+      <LoginForm next={next} expired={expired === "1"} startPhone={phone} support={{ whatsapp: support.whatsapp, phoneDisplay: support.phoneDisplay, email: support.email }} testAccounts={testAccounts} />
     </AuthShell>
   );
 }

@@ -47,7 +47,7 @@ export async function waiveInstallment(formData: FormData) {
     });
     await notify({
       organizationId: org,
-      roles: ["OFFICE_MANAGER"],
+      owners: true,
       title: `إعفاء قسط — ${inst.tenant.name}`,
       body: `القسط ${inst.seq} من العقد ${inst.contract.code} · ${Math.round(remaining)} ر.س · السبب: ${reason}`,
       severity: "WARNING",

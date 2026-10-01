@@ -6,6 +6,7 @@ import { propertyClaims, type ClaimFilter } from "@/lib/collections";
 import { money, pct, num, date, daysFromToday } from "@/lib/format";
 import { Card, StatGrid, StatCard, Progress, Table, EmptyState, Select } from "@/components/ui";
 import { ClaimsTable } from "@/app/(app)/collections/ClaimsTable";
+import { teamWith } from "@/lib/team";
 
 const FILTERS: { key: ClaimFilter; label: string }[] = [
   { key: "all", label: "الكل" },
@@ -23,7 +24,7 @@ export async function CollectionsTab({ user, propertyId, filter, unitId }: { use
   const [{ claims, upcoming, stats }, units, collectors, templates] = await Promise.all([
     propertyClaims(user, propertyId, f, unitId),
     db.unit.findMany({ where: { organizationId: org, propertyId, status: { not: "ARCHIVED" } }, select: { id: true, number: true }, orderBy: { number: "asc" } }),
-    db.user.findMany({ where: { organizationId: org, role: { in: ["COLLECTOR", "OFFICE_MANAGER"] }, status: "ACTIVE" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    teamWith(org, "collections.manage"),
     db.notificationTemplate.findMany({ where: { organizationId: org, isActive: true, event: { in: ["INSTALLMENT_DUE", "INSTALLMENT_OVERDUE"] } }, orderBy: { name: "asc" }, select: { id: true, name: true, channel: true, body: true } }),
   ]);
   const base = `/properties/${propertyId}?tab=collections`;

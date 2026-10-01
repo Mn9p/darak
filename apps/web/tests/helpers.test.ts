@@ -149,9 +149,31 @@ describe("loginAllowedPhones", () => {
     process.env.LOGIN_ALLOWED_PHONES = "0501339148, +966500159105 ,garbage";
     expect(loginAllowedPhones()).toEqual(["966501339148", "966500159105"]);
     expect(loginAllowed("966501339148")).toBe(true);
-    expect(loginAllowed("966500000001")).toBe(false);
+    expect(loginAllowed("966512345678")).toBe(false);
     process.env.LOGIN_ALLOWED_PHONES = "";
     expect(loginAllowedPhones()).toBeNull();
+    expect(loginAllowed("966512345678")).toBe(true);
+  });
+  it("lets the fake test numbers through a closed-test allowlist unless TEST_ACCOUNTS=off", async () => {
+    const { loginAllowed } = await import("@/lib/auth");
+    process.env.LOGIN_ALLOWED_PHONES = "0501339148";
     expect(loginAllowed("966500000001")).toBe(true);
+    process.env.TEST_ACCOUNTS = "off";
+    expect(loginAllowed("966500000001")).toBe(false);
+    delete process.env.TEST_ACCOUNTS;
+    process.env.LOGIN_ALLOWED_PHONES = "";
+  });
+});
+
+describe("test accounts", () => {
+  it("one fake number per role, never the platform admin, switchable", async () => {
+    const { TEST_ACCOUNTS, isTestPhone } = await import("@/lib/test-accounts");
+    expect(new Set(TEST_ACCOUNTS.map((a) => a.phone)).size).toBe(TEST_ACCOUNTS.length);
+    expect(isTestPhone("966500000000")).toBe(false); // demo platform admin is not a test account
+    expect(isTestPhone("966501339148")).toBe(false);
+    expect(isTestPhone("966500000005")).toBe(true);
+    process.env.TEST_ACCOUNTS = "off";
+    expect(isTestPhone("966500000005")).toBe(false);
+    delete process.env.TEST_ACCOUNTS;
   });
 });

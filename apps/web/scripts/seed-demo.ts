@@ -3,9 +3,16 @@
 // Creates two demo offices with owners, properties, units, tenants, contracts, payments and collection cases.
 // Every demo user signs in with a phone number from DEMO_PHONES (the SMS code is printed in the dev console).
 import "./env";
+import { PRESETS } from "../src/lib/permissions";
 import { db } from "@darak/db";
 import { buildSchedule, runEngine } from "../src/lib/engine";
 import { addDays, addMonths } from "../src/lib/format";
+
+/** Demo employee: role EMPLOYEE with a permission preset (same presets the team screen offers). */
+const employee = (key: string) => {
+  const p = PRESETS.find((x) => x.key === key)!;
+  return { role: "EMPLOYEE", permissions: JSON.stringify(p.permissions), allProperties: p.allProperties };
+};
 
 
 // deterministic PRNG
@@ -77,7 +84,7 @@ async function main() {
 
   // second org for tenant isolation
   const org2 = await db.organization.create({ data: { name: "مكتب المدار العقاري", slug: "almadar", city: "جدة", plan: "STARTER", status: "TRIAL", unitsLimit: 100, usersLimit: 5, renewalDate: addDays(today, 21) } });
-  await db.user.create({ data: { organizationId: org2.id, name: "سامي الحارثي", phone: DEMO_PHONES.sami, email: "sami@almadar.sa", role: "OFFICE_MANAGER" } });
+  await db.user.create({ data: { organizationId: org2.id, name: "سامي الحارثي", phone: DEMO_PHONES.sami, email: "sami@almadar.sa", role: "ACCOUNT_OWNER" } });
   const p2 = await db.property.create({ data: { organizationId: org2.id, code: "PRP-0001", name: "عمارة المدار", type: "RESIDENTIAL_BUILDING", city: "جدة", district: "الروضة" } });
   await db.unit.createMany({ data: [1, 2, 3].map((n) => ({ organizationId: org2.id, propertyId: p2.id, code: `UNT-000${n}`, number: `${n}`, type: "APARTMENT", status: "VACANT", targetRent: 30000 })) });
 
@@ -86,14 +93,14 @@ async function main() {
   const jeddah = await db.branch.create({ data: { organizationId: oid, name: "فرع جدة", city: "جدة", phone: "0126543210" } });
 
   // ── Users ──
-  const manager = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "عبدالرحمن الديار", email: "manager@darak.sa", role: "OFFICE_MANAGER", employeeCode: "EMP-001", department: "الإدارة", jobTitle: "مدير المكتب", phone: DEMO_PHONES.manager } });
-  const pm = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "سلمان القحطاني", email: "pm@darak.sa", role: "PROPERTY_MANAGER", employeeCode: "EMP-002", department: "التشغيل", jobTitle: "مدير عقارات", managerId: manager.id, phone: DEMO_PHONES.pm } });
-  const pm2 = await db.user.create({ data: { organizationId: oid, branchId: jeddah.id, name: "هاني الزهراني", email: "pm2@darak.sa", role: "PROPERTY_MANAGER", employeeCode: "EMP-003", department: "التشغيل", jobTitle: "مدير عقارات — جدة", managerId: manager.id, phone: DEMO_PHONES.pm2 } });
-  const leasing = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "نورة العتيبي", email: "leasing@darak.sa", role: "LEASING", employeeCode: "EMP-004", department: "التأجير", jobTitle: "مسؤولة تأجير", managerId: manager.id, phone: DEMO_PHONES.leasing } });
-  const collector = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "فهد الشمري", email: "collector@darak.sa", role: "COLLECTOR", employeeCode: "EMP-005", department: "التحصيل", jobTitle: "محصل", managerId: manager.id, phone: DEMO_PHONES.collector } });
-  const collector2 = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "ريم الدوسري", email: "collector2@darak.sa", role: "COLLECTOR", employeeCode: "EMP-006", department: "التحصيل", jobTitle: "محصلة أولى", managerId: manager.id, phone: DEMO_PHONES.collector2 } });
-  const accountant = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "ماجد الحربي", email: "accountant@darak.sa", role: "ACCOUNTANT", employeeCode: "EMP-007", department: "المالية", jobTitle: "محاسب", managerId: manager.id, phone: DEMO_PHONES.accountant } });
-  const auditor = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "لمى السبيعي", email: "auditor@darak.sa", role: "AUDITOR", employeeCode: "EMP-009", department: "المراجعة", jobTitle: "مدققة داخلية", phone: DEMO_PHONES.auditor } });
+  const manager = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "عبدالرحمن الديار", email: "manager@darak.sa", role: "ACCOUNT_OWNER", employeeCode: "EMP-001", department: "الإدارة", jobTitle: "صاحب المكتب", phone: DEMO_PHONES.manager } });
+  const pm = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "سلمان القحطاني", email: "pm@darak.sa", ...employee("PROPERTY"), employeeCode: "EMP-002", department: "التشغيل", jobTitle: "مدير عقارات", managerId: manager.id, phone: DEMO_PHONES.pm } });
+  const pm2 = await db.user.create({ data: { organizationId: oid, branchId: jeddah.id, name: "هاني الزهراني", email: "pm2@darak.sa", ...employee("PROPERTY"), employeeCode: "EMP-003", department: "التشغيل", jobTitle: "مدير عقارات — جدة", managerId: manager.id, phone: DEMO_PHONES.pm2 } });
+  const leasing = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "نورة العتيبي", email: "leasing@darak.sa", ...employee("LEASING"), employeeCode: "EMP-004", department: "التأجير", jobTitle: "مسؤولة تأجير", managerId: manager.id, phone: DEMO_PHONES.leasing } });
+  const collector = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "فهد الشمري", email: "collector@darak.sa", ...employee("COLLECTION"), employeeCode: "EMP-005", department: "التحصيل", jobTitle: "محصل", managerId: manager.id, phone: DEMO_PHONES.collector } });
+  const collector2 = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "ريم الدوسري", email: "collector2@darak.sa", ...employee("COLLECTION"), employeeCode: "EMP-006", department: "التحصيل", jobTitle: "محصلة أولى", managerId: manager.id, phone: DEMO_PHONES.collector2 } });
+  const accountant = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "ماجد الحربي", email: "accountant@darak.sa", ...employee("ACCOUNTING"), employeeCode: "EMP-007", department: "المالية", jobTitle: "محاسب", managerId: manager.id, phone: DEMO_PHONES.accountant } });
+  const auditor = await db.user.create({ data: { organizationId: oid, branchId: riyadh.id, name: "لمى السبيعي", email: "auditor@darak.sa", ...employee("READONLY"), employeeCode: "EMP-009", department: "المراجعة", jobTitle: "مدققة داخلية", phone: DEMO_PHONES.auditor } });
   const staff = [manager, pm, pm2, leasing, collector, collector2, accountant, auditor];
 
   // ── Owners ──
@@ -469,13 +476,13 @@ async function main() {
   });
   await db.notificationRule.createMany({
     data: [
-      { organizationId: oid, name: "تنبيه انتهاء عقد — 90 يوم", event: "CONTRACT_EXPIRING", daysBefore: 90, channels: "IN_APP", targetRoles: "PROPERTY_MANAGER" },
-      { organizationId: oid, name: "مهمة متابعة تجديد — 60 يوم", event: "CONTRACT_EXPIRING", daysBefore: 60, channels: "IN_APP,EMAIL", targetRoles: "LEASING", createTask: true },
-      { organizationId: oid, name: "تصعيد انتهاء عقد — 30 يوم", event: "CONTRACT_EXPIRING", daysBefore: 30, channels: "IN_APP,EMAIL", targetRoles: "OFFICE_MANAGER" },
+      { organizationId: oid, name: "تنبيه انتهاء عقد — 90 يوم", event: "CONTRACT_EXPIRING", daysBefore: 90, channels: "IN_APP", targetRoles: "EMPLOYEE" },
+      { organizationId: oid, name: "مهمة متابعة تجديد — 60 يوم", event: "CONTRACT_EXPIRING", daysBefore: 60, channels: "IN_APP,EMAIL", targetRoles: "EMPLOYEE", createTask: true },
+      { organizationId: oid, name: "تصعيد انتهاء عقد — 30 يوم", event: "CONTRACT_EXPIRING", daysBefore: 30, channels: "IN_APP,EMAIL", targetRoles: "ACCOUNT_OWNER" },
       { organizationId: oid, name: "تذكير المستأجر قبل الاستحقاق", event: "INSTALLMENT_DUE", daysBefore: 7, channels: "SMS,WHATSAPP", targetRoles: "TENANT" },
-      { organizationId: oid, name: "فتح مطالبة عند التأخر", event: "INSTALLMENT_OVERDUE", daysBefore: 0, channels: "IN_APP", targetRoles: "COLLECTOR", createTask: true },
-      { organizationId: oid, name: "وعد سداد مكسور", event: "BROKEN_PROMISE", daysBefore: 0, channels: "IN_APP", targetRoles: "COLLECTOR,OFFICE_MANAGER", createTask: true },
-      { organizationId: oid, name: "انتهاء مستند", event: "DOCUMENT_EXPIRING", daysBefore: 30, channels: "IN_APP", targetRoles: "OFFICE_MANAGER", createTask: true },
+      { organizationId: oid, name: "فتح مطالبة عند التأخر", event: "INSTALLMENT_OVERDUE", daysBefore: 0, channels: "IN_APP", targetRoles: "EMPLOYEE", createTask: true },
+      { organizationId: oid, name: "وعد سداد مكسور", event: "BROKEN_PROMISE", daysBefore: 0, channels: "IN_APP", targetRoles: "EMPLOYEE,ACCOUNT_OWNER", createTask: true },
+      { organizationId: oid, name: "انتهاء مستند", event: "DOCUMENT_EXPIRING", daysBefore: 30, channels: "IN_APP", targetRoles: "ACCOUNT_OWNER", createTask: true },
     ],
   });
 

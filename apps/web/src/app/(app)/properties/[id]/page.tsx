@@ -158,7 +158,7 @@ export default async function PropertyPage({ params, searchParams }: { params: P
             </Suspense>
             <Card title="الملكية" subtitle={currentOwners.length > 1 ? "ملكية مشتركة" : undefined}>
               {currentOwners.map((o) => (
-                <div key={o.id} className="flex items-center justify-between border-b border-[#EDF1EF] py-2 last:border-0">
+                <div key={o.id} className="flex items-center justify-between border-b border-line-soft py-2 last:border-0">
                   <div>
                     <Link href={`/owners/${o.owner.id}`} className="font-bold hover:text-brand">
                       {o.owner.name}

@@ -5,6 +5,7 @@ import { assertCan, isScoped, propertyIdScope } from "@/lib/permissions";
 import { PageHeader } from "@/components/ui";
 import { LeadForm } from "../../LeadForm";
 import { updateLead } from "../../actions";
+import { teamWith } from "@/lib/team";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function EditLeadPage({ params }: { params: Promise<{ id: s
       select: { id: true, number: true, targetRent: true, property: { select: { name: true } } },
       orderBy: [{ property: { name: "asc" } }, { number: "asc" }],
     }),
-    db.user.findMany({ where: { organizationId: org, role: { in: ["OFFICE_MANAGER", "PROPERTY_MANAGER", "LEASING"] }, status: "ACTIVE" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    teamWith(org, "leasing.manage"),
   ]);
   const plain = JSON.parse(JSON.stringify(lead));
   return (

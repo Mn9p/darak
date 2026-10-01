@@ -1,6 +1,44 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Tone } from "@/lib/constants";
+import { Icon, type IconName } from "../icons";
+
+export type StatHue = "blue" | "indigo" | "green" | "orange" | "purple" | "red" | "teal" | "gold" | "navy";
+
+/**
+ * Small glyph next to a stat card's label, picked from the label so every StatCard gets one without touching call sites
+ * (first match wins; order matters). Pass `icon` to override; `hue` groups related figures (data-hue).
+ */
+const STAT_RULES: [RegExp, IconName, StatHue][] = [
+  [/متأخر|تجاوز|مكسور|متعثر|غير المسدد/, "alert", "red"],
+  [/شاغر/, "door", "orange"],
+  [/إشغال/, "chart", "blue"],
+  [/وحد/, "door", "indigo"],
+  [/مستأجر/, "users", "purple"],
+  [/مالك|ملاك/, "key", "teal"],
+  [/كشف|كشوف/, "bank", "teal"],
+  [/عقد|عقود/, "file", "indigo"],
+  [/مصروف|حصتك/, "receipt", "orange"],
+  [/وعود|متابع|مهام|مهمة/, "tasks", "purple"],
+  [/عقار|مكاتب|العملاء/, "building", "blue"],
+  [/محصل|تحصيل|حصّل|سداد|مسدد|قبض|إيراد|إيجار|دفع|مستحق|المبلغ|الإجمالي|رصيد|اشتراك/, "coins", "green"],
+  [/مطابقة|نسبة/, "chart", "blue"],
+  [/موظف|مستخدم|فريق/, "user", "indigo"],
+  [/مستند/, "folder", "gold"],
+  [/إشعار|تذكير|رسائل/, "bell", "gold"],
+  [/تذاكر|دعم/, "help", "orange"],
+  [/طلب/, "handshake", "gold"],
+  [/سجل|عملية|عمليات/, "clock", "navy"],
+  [/أولوية/, "alert", "orange"],
+  [/حالة|فحوص/, "shield", "green"],
+];
+
+export function statVisual(label: string, tone?: Tone): { icon: IconName; hue: StatHue } {
+  const hit = STAT_RULES.find(([re]) => re.test(label));
+  const icon = hit?.[1] ?? "chart";
+  const hue: StatHue = tone === "danger" ? "red" : tone === "warning" ? "orange" : tone === "success" ? "green" : hit?.[2] ?? "blue";
+  return { icon, hue };
+}
 
 /** Tiny inline trend line. Values are plotted left-to-right (oldest first). */
 export function Sparkline({ values, width = 84, height = 28, stroke = "var(--dk-green-500)", fill = true, className = "" }: { values: number[]; width?: number; height?: number; stroke?: string; fill?: boolean; className?: string }) {
@@ -30,6 +68,8 @@ export function StatCard({
   tone,
   delta,
   spark,
+  icon,
+  hue,
 }: {
   label: string;
   value: ReactNode;
@@ -41,13 +81,25 @@ export function StatCard({
   delta?: { value: number; label: string; invert?: boolean };
   /** Oldest → newest. Rendered as a sparkline in the corner. */
   spark?: number[];
+  /** Overrides the icon tile picked from the label. */
+  icon?: IconName;
+  hue?: StatHue;
 }) {
-  const toneClass = tone === "danger" ? "!text-danger" : tone === "warning" ? "!text-warning" : tone === "success" ? "!text-success" : "";
+  const v = statVisual(label, tone);
+  // On the navy card the text-safe semantic colours are too dark; use their light counterparts there.
+  const toneClass = dark
+    ? tone === "danger" ? "!text-[#F3B3AE]" : tone === "warning" ? "!text-[#F0CF8E]" : tone === "success" ? "!text-[#8FD8B4]" : ""
+    : tone === "danger" ? "!text-danger" : tone === "warning" ? "!text-warning" : tone === "success" ? "!text-success" : "";
   const dir = delta ? (delta.value > 0 ? "up" : delta.value < 0 ? "down" : "flat") : null;
   const good = delta ? (delta.invert ? delta.value <= 0 : delta.value >= 0) : true;
   const body = (
-    <div className={`statcard h-full ${dark ? "dark" : ""}`}>
-      <div className="lbl">{label}</div>
+    <div className={`statcard h-full ${dark ? "dark" : ""}`} data-hue={hue ?? v.hue}>
+      <div className="head">
+        <span className={`ico ${tone && tone !== "neutral" && tone !== "brand" && tone !== "info" ? `tone-${tone}` : ""}`} aria-hidden>
+          <Icon name={icon ?? v.icon} size={16} />
+        </span>
+        <span className="lbl">{label}</span>
+      </div>
       <div className={`val ${toneClass}`}>{value}</div>
       {sub && <div className="sub">{sub}</div>}
       {delta && dir && (
@@ -71,7 +123,7 @@ export function StatGrid({ children, cols = 4 }: { children: ReactNode; cols?: 2
     5: "grid-cols-2 md:grid-cols-3 xl:grid-cols-5",
     6: "grid-cols-2 md:grid-cols-3 xl:grid-cols-6",
   };
-  return <div className={`grid gap-3 ${map[cols]}`}>{children}</div>;
+  return <div className={`grid gap-3 md:gap-4 ${map[cols]}`}>{children}</div>;
 }
 
 export function Progress({ value, tone, onDark }: { value: number; tone?: "warn" | "danger" | "sand"; onDark?: boolean }) {

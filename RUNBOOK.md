@@ -3,7 +3,7 @@
 ## Health & monitoring
 - `GET /api/health` → DB ping + latency. Wire to UptimeRobot / Better Uptime (1-min interval, alert after 2 failures).
 - Logs are JSON lines on stdout (`src/lib/logger.ts`). Ship with Vercel Log Drains, Datadog agent, or `docker compose logs`. Set `SENTRY_DSN` to forward errors.
-- In-app: `/admin/health` (platform) and `/integrations` (per office) show integration status; `ERROR` states notify OFFICE_MANAGER automatically via the engine.
+- In-app: `/admin/health` (platform) and `/integrations` (per office) show integration status; `ERROR` states notify the account owners automatically via the engine.
 
 ## Scheduled jobs
 `GET /api/cron/run` (every 15 min) runs for every non-suspended organization:

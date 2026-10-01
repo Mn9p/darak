@@ -66,7 +66,7 @@ export async function GuideCard({
         ))}
       </ol>
       {(note || cta || secondary) && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#ECDFC8] pt-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[#F0E2BF] pt-3">
           {cta && (
             <Link href={cta.href} className="btn btn-primary btn-sm">
               {cta.label}

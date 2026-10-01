@@ -131,7 +131,7 @@ export async function moveStage(formData: FormData) {
     if (stage === "APPROVED") {
       await notify({
         organizationId: user.organizationId,
-        roles: ["OFFICE_MANAGER"],
+        owners: true,
         title: `اعتماد عميل محتمل: ${lead.name}`,
         body: lead.unit ? `الوحدة ${lead.unit.number} — جاهز لإعداد العقد.` : "جاهز لإعداد العقد.",
         severity: "SUCCESS",

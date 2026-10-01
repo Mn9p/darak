@@ -168,6 +168,36 @@ export const Icons = {
       <path d="M12 9v5M12 17h.01" />
     </svg>
   ),
+  grid: ({ size = 18, ...p }: P) => (
+    <svg {...base(size, p)}>
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" />
+    </svg>
+  ),
+  close: ({ size = 18, ...p }: P) => (
+    <svg {...base(size, p)}>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  ),
+  logout: ({ size = 18, ...p }: P) => (
+    <svg {...base(size, p)}>
+      <path d="M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5" />
+      <path d="M10 8l-4 4 4 4M6 12h10" />
+    </svg>
+  ),
+  shield: ({ size = 18, ...p }: P) => (
+    <svg {...base(size, p)}>
+      <path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z" />
+      <path d="m9 12 2.2 2.2L15.5 10" />
+    </svg>
+  ),
+  phone: ({ size = 18, ...p }: P) => (
+    <svg {...base(size, p)}>
+      <path d="M5 4h3.5l1.5 4-2 1.5a11 11 0 0 0 6.5 6.5l1.5-2 4 1.5V19a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4z" />
+    </svg>
+  ),
 };
 
 export type IconName = keyof typeof Icons;

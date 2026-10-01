@@ -26,6 +26,8 @@ const nextConfig: NextConfig = {
   // NEXT_DIST_DIR lets CI/verification builds run while `next dev` holds .next
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   poweredByHeader: false,
+  // The dev "N" badge sits on top of the phone bottom bar; build errors still show their overlay.
+  devIndicators: false,
   transpilePackages: ["@darak/db"],
   serverExternalPackages: ["@prisma/client"],
   reactStrictMode: true,

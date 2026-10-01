@@ -9,6 +9,7 @@ import { db } from "./db";
 import { logger, maskPhone } from "./logger";
 import { sendMessage, smsProvider } from "./channels";
 import { authSecret } from "./secrets";
+import { isTestPhone } from "./test-accounts";
 
 export { authSecret } from "./secrets";
 
@@ -40,7 +41,9 @@ export type RequestOtpResult = { ok: true; echo?: string; retryAfter: number } |
 
 /** Issues a new code for the phone (normalized 9665…) and sends it. Throttled per phone and per IP. */
 export async function requestOtp(phone: string, ip: string): Promise<RequestOtpResult> {
-  const echo = otpEchoEnabled();
+  // Test numbers (lib/test-accounts) never go through an SMS provider: their code is shown on screen in every environment.
+  const test = isTestPhone(phone);
+  const echo = test || otpEchoEnabled();
   if (smsProvider() === null && !echo) {
     logger.error("otp.no_provider", { phone: maskPhone(phone) });
     return { ok: false, error: "خدمة الرسائل غير مفعّلة بعد. تواصل مع فريق دارك." };
@@ -65,7 +68,7 @@ export async function requestOtp(phone: string, ip: string): Promise<RequestOtpR
   const row = await db.otpCode.create({ data: { phone, codeHash: hashOtp(phone, code), ip, expiresAt: new Date(Date.now() + OTP_MINUTES * 60 * 1000) } });
 
   const body = `رمز الدخول إلى دارك: ${code}\nصالح لمدة ${OTP_MINUTES} دقائق. لا تشاركه مع أحد.`;
-  const sent = await sendMessage({ channel: "SMS", to: phone, body, otp: code, entityType: "OTP" });
+  const sent = test ? { ok: true as const, provider: "test", error: undefined } : await sendMessage({ channel: "SMS", to: phone, body, otp: code, entityType: "OTP" });
   if (!sent.ok && !echo) {
     // The code never left the building: drop the row so a vendor outage does not eat the user's quota or start the cool-down.
     await db.otpCode.delete({ where: { id: row.id } }).catch(() => {});

@@ -4,6 +4,7 @@
 import { db } from "@/lib/db";
 import type { SessionUser } from "@/lib/auth";
 import { propertyIdScope, contractScope, isScoped, can } from "@/lib/permissions";
+import { activeTeam } from "@/lib/team";
 import { computeOwnerStatement } from "@/lib/engine";
 import { money, pct, date, daysOverdue, daysFromToday, startOfMonth, endOfMonth, addMonths, addDays, shortMonth, monthLabel, ksaParts, ksaDate, startOfDay, endOfDay, inputDate } from "@/lib/format";
 import {
@@ -87,7 +88,7 @@ export const reportBySlug = (slug: string) => REPORTS.find((r) => r.slug === slu
 
 /**
  * Who may open a report. Financial reports need reports.financial. Staff reports (employees group) cover the whole office,
- * so property-scoped roles (PROPERTY_MANAGER) do not get them.
+ * so employees limited to assigned properties do not get them.
  */
 export function reportAllowed(user: SessionUser, meta: ReportMeta): boolean {
   if (!can(user, "reports.view")) return false;
@@ -963,7 +964,8 @@ async function collectionPerformance(c: Ctx): Promise<ReportResult> {
   const [cases, actions, collectors] = await Promise.all([
     db.collectionCase.findMany({ where: { organizationId: org, ...(cw.contract ? { installment: { contract: cw.contract } } : {}) }, select: { id: true, collectorId: true, followUpStatus: true, brokenPromises: true, updatedAt: true, installment: { select: { amount: true, paidAmount: true } } } }),
     db.collectionAction.findMany({ where: { createdAt: { gte: f.from, lte: f.to }, case: { organizationId: org } }, select: { byUserId: true, type: true, outcome: true } }),
-    db.user.findMany({ where: { organizationId: org, role: "COLLECTOR" }, select: { id: true, name: true } }),
+    // Everyone who works claims: employees with the collections permission (owners appear once they hold cases).
+    activeTeam(org).then((t) => t.filter((u) => u.role === "EMPLOYEE" && can(u, "collections.manage"))),
   ]);
   const ids = new Set<string>([...collectors.map((u) => u.id), ...cases.map((k) => k.collectorId).filter((x): x is string => Boolean(x))]);
   const users = await db.user.findMany({ where: { id: { in: [...ids] } }, select: { id: true, name: true } });

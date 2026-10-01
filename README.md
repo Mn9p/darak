@@ -20,16 +20,18 @@ pnpm dev                    # http://localhost:3000 → landing page → "ابد
 
 **Sign-in is by mobile number.** Enter any Saudi mobile (05XXXXXXXX); a 6-digit code is sent by SMS. In development (or on a staging deploy with `OTP_ECHO=always` + `ALLOW_OTP_ECHO_IN_PROD=1`) the code is shown on screen, so the whole product can be tested before an SMS vendor is connected; in production without those flags login codes go only by SMS. Only numbers the team registered receive a code (invite-only): a new office fills **اطلب حسابًا** on the landing page, the request lands in `/admin/requests`, and the team opens the office from there. A number that belongs to an owner or tenant record opens their portal automatically.
 
+**Test accounts** — on any deployment the platform admin can press «تجهيز الحسابات التجريبية» on `/admin` to create a sandbox office with one fake number per role (same numbers as below, except the platform admin). Their login code appears on screen; no SMS is sent. Switch off with `TEST_ACCOUNTS=off`.
+
 Demo office (only after `pnpm db:reset:demo`):
 
 | Mobile | Role |
 |---|---|
-| 0500000001 | مدير المكتب — full office operating system |
-| 0500000002 | مدير عقار — scoped to assigned properties |
-| 0500000004 | موظف تأجير |
-| 0500000005 | محصل — action queue dashboard |
-| 0500000007 | محاسب — payments, reconciliation, statements |
-| 0500000009 | مدقق — read only |
+| 0500000001 | صاحب الحساب (account owner) — everything, manages the team and their permissions |
+| 0500000002 | موظف — "إدارة العقارات" preset, assigned properties only |
+| 0500000004 | موظف — "التأجير" preset |
+| 0500000005 | موظف — "التحصيل" preset (personal claims dashboard) |
+| 0500000007 | موظف — "المحاسبة" preset (receipts, reconciliation, statements) |
+| 0500000009 | موظف — "اطلاع فقط" (read only) |
 | 0500000010 | بوابة المالك |
 | 0500000011 | بوابة المستأجر |
 | 0500000000 | إدارة منصة دارك (Super Admin) |
@@ -40,7 +42,7 @@ Demo office (only after `pnpm db:reset:demo`):
 - **Prisma 6 + SQLite** (swap `provider` to PostgreSQL for production; schema is provider-agnostic)
 - **Tailwind v4** with DARAK design tokens (`src/app/globals.css`) from the brand identity
 - **Auth**: mobile number + one-time SMS code (`src/lib/otp.ts`, hashed codes, 5 min / 5 attempts / 60 s resend), signed cookie sessions (jose) backed by revocable DB sessions with device/IP tracking. No passwords.
-- **Permission Engine**: RBAC + Data Scope (`src/lib/permissions.ts`) — every page and action checks auth → permission → organization → scope (BR-005)
+- **Roles & permissions** (`src/lib/permissions.ts`, `src/lib/team.ts`): two office roles — the account owner (all access) and employees whose permissions and property reach the owner sets per person from فريق العمل (presets or individual permissions). Every page and action checks auth → permission → organization → property scope (BR-005); menus show only permitted sections.
 - **Workflow / Financial Engine** (`src/lib/engine.ts`): computes installment & contract statuses, opens collection cases, scores priority, detects broken promises, escalates, runs renewal workflow (90/60/30), SLA alerts, document expiry tasks, owner statement math with ownership percentages and historical ownership
 - **Audit Layer** (`src/lib/audit.ts`): append-only log with user/action/entity/old/new/IP/device
 - **Integration Layer**: adapter pattern (WhatsApp, SMS, Email, Bank) isolated from core logic

@@ -5,6 +5,7 @@ import { can, isScoped } from "@/lib/permissions";
 import { PageHeader, Alert } from "@/components/ui";
 import { OwnerForm } from "../../OwnerForm";
 import { updateOwner } from "../../actions";
+import { teamWith } from "@/lib/team";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +17,7 @@ export default async function EditOwnerPage({ params }: { params: Promise<{ id: 
   const scope = isScoped(user) ? { ownerships: { some: { propertyId: { in: user.assignedPropertyIds } } } } : {};
   const owner = await db.owner.findFirst({ where: { id, organizationId: org, ...scope } });
   if (!owner) notFound();
-  const managers = await db.user.findMany({
-    where: { organizationId: org, status: "ACTIVE", role: { in: ["OFFICE_MANAGER", "PROPERTY_MANAGER", "ACCOUNTANT", "LEASING"] } },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
+  const managers = await teamWith(org, "owners.view");
   const canFinancial = can(user, "owners.financial");
   const plain = JSON.parse(JSON.stringify({ ...owner, iban: canFinancial ? owner.iban : null, bankName: canFinancial ? owner.bankName : null }));
 

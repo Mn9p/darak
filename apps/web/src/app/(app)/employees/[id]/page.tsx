@@ -2,53 +2,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { assertCan, can, ROLE_PERMISSIONS, type Permission } from "@/lib/permissions";
+import { assertCan, can, effectivePermissions, matchPreset, normalizePermissions, PERMISSION_GROUPS } from "@/lib/permissions";
 import { ROLES, STAFF_ROLES, USER_STATUS, AUDIT_ACTIONS, ENTITY_TYPES, NOTIFICATION_CHANNELS, NOTIFICATION_EVENTS, type Role } from "@/lib/constants";
 import { money, datetime, date, relative, pct, safeJson, addDays } from "@/lib/format";
 import { PageHeader, Card, Table, StatusTag, Tabs, DL, StatGrid, StatCard, EmptyState, Tag, ActionButton, Avatar, KV, Alert } from "@/components/ui";
 import { displayPhone } from "@/lib/phone";
+import { Icon } from "@/components/icons";
 import { deactivateEmployee, activateEmployee, revokeSession } from "../actions";
 
 export const dynamic = "force-dynamic";
 const OPEN = ["NEW", "ASSIGNED", "IN_PROGRESS", "WAITING"];
 const TABS = [
   { key: "overview", label: "الملف" },
-  { key: "permissions", label: "الصلاحيات ونطاق البيانات" },
+  { key: "permissions", label: "الصلاحيات والعقارات" },
   { key: "kpis", label: "مؤشرات الأداء" },
   { key: "activity", label: "النشاط" },
   { key: "sessions", label: "الجلسات والأمان" },
 ];
-
-const MODULE_LABELS: Record<string, string> = {
-  dashboard: "لوحة التحكم",
-  properties: "العقارات",
-  units: "الوحدات",
-  owners: "الملاك",
-  tenants: "المستأجرون",
-  leasing: "التأجير",
-  contracts: "العقود",
-  installments: "جدول الدفعات",
-  collections: "التحصيل",
-  payments: "سندات القبض",
-  expenses: "المصروفات",
-  statements: "كشوف حساب الملاك",
-  tasks: "المهام",
-  employees: "الموظفون",
-  reports: "التقارير",
-  documents: "المستندات",
-  audit: "سجل التدقيق",
-  integrations: "التكاملات",
-  settings: "الإعدادات",
-  import: "الاستيراد",
-};
-const ACTION_LABELS: Record<string, string> = {
-  view: "عرض",
-  manage: "إدارة",
-  approve: "اعتماد",
-  financial: "بيانات مالية",
-  waive: "إعفاء",
-  export: "تصدير",
-};
 
 export default async function EmployeePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const user = await requireStaff();
@@ -91,13 +61,11 @@ export default async function EmployeePage({ params, searchParams }: { params: P
   const onTime = withDue.filter((t) => t.completedAt! <= t.dueDate!).length;
   const onTimePct = withDue.length ? (onTime / withDue.length) * 100 : null;
 
-  const perms = ROLE_PERMISSIONS[role] ?? [];
-  const grouped = perms.reduce<Record<string, string[]>>((acc, p) => {
-    const [mod, act] = (p as Permission).split(".");
-    (acc[mod] ??= []).push(act);
-    return acc;
-  }, {});
-  const scoped = role === "PROPERTY_MANAGER";
+  const isOwnerRole = role === "ACCOUNT_OWNER";
+  const memberPerms = isOwnerRole ? [] : normalizePermissions(e.permissions);
+  const granted = new Set(effectivePermissions({ role, permissions: memberPerms }));
+  const preset = isOwnerRole ? null : matchPreset(memberPerms, e.allProperties);
+  const scoped = !isOwnerRole && !e.allProperties;
 
   return (
     <>
@@ -121,7 +89,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
             {e.branch && ` · ${e.branch.name}`}
           </span>
         }
-        breadcrumbs={[{ label: "الموظفون", href: "/employees" }, { label: e.name }]}
+        breadcrumbs={[{ label: "فريق العمل", href: "/employees" }, { label: e.name }]}
         actions={
           canManage ? (
             <>
@@ -186,7 +154,7 @@ export default async function EmployeePage({ params, searchParams }: { params: P
                 <p className="text-[13px] text-faint">لا يوجد موظفون تحت إدارته.</p>
               ) : (
                 e.reports.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between border-b border-[#EDF1EF] py-2 last:border-0">
+                  <div key={r.id} className="flex items-center justify-between border-b border-line-soft py-2 last:border-0">
                     <Link href={`/employees/${r.id}`} className="font-bold hover:text-brand">
                       {r.name}
                     </Link>
@@ -217,52 +185,56 @@ export default async function EmployeePage({ params, searchParams }: { params: P
 
       {tab === "permissions" && (
         <div className="grid gap-4 xl:grid-cols-3">
-          <Card title={`صلاحيات الدور: ${ROLES[role]?.label ?? e.role}`} subtitle="الصلاحيات تُدار على مستوى الدور (RBAC) — لتغييرها غيّر الدور" className="xl:col-span-2">
-            {perms.length === 0 ? (
-              <p className="text-[13px] text-faint">لا توجد صلاحيات لهذا الدور.</p>
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {Object.entries(grouped).map(([mod, acts]) => (
-                  <div key={mod} className="rounded-xl bg-mist px-3 py-2.5">
-                    <div className="text-[13px] font-bold text-text">{MODULE_LABELS[mod] ?? mod}</div>
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {acts.map((a) => (
-                        <Tag key={a} tone={a === "view" ? "neutral" : a === "approve" ? "success" : "info"} plain>
-                          {ACTION_LABELS[a] ?? a}
-                        </Tag>
-                      ))}
-                    </div>
+          <Card
+            title={isOwnerRole ? "صاحب الحساب: كل الصلاحيات" : preset ? `قالب «${preset.label}»` : "صلاحيات مخصصة"}
+            subtitle={isOwnerRole ? "يرى كل شيء ويدير الفريق والإعدادات والاشتراك." : `${granted.size - 1} صلاحية · تُطبَّق فورًا عند كل طلب`}
+            className="xl:col-span-2"
+            actions={canManage && !isSelf ? <Link href={`/employees/${e.id}/edit`} className="btn btn-outline btn-xs">تعديل الصلاحيات</Link> : undefined}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              {PERMISSION_GROUPS.map((g) => (
+                <div key={g.key} className="perm-group">
+                  <div className="perm-group-head">
+                    <b>{g.label}</b>
                   </div>
-                ))}
-              </div>
-            )}
+                  <ul className="space-y-1">
+                    {g.items.map((it) => {
+                      const on = granted.has(it.key);
+                      return (
+                        <li key={it.key} className={`flex items-center gap-2 text-[14px] ${on ? "text-text" : "text-faint line-through decoration-faint/50"}`}>
+                          <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full ${on ? "bg-success-bg text-success" : "bg-mist text-faint"}`} aria-hidden>
+                            <Icon name={on ? "check" : "close"} size={12} />
+                          </span>
+                          {it.label}
+                          <span className="sr-only">{on ? "مسموح" : "غير مسموح"}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            {!isOwnerRole && <p className="help mt-3">إدارة فريق العمل والإعدادات والاشتراك والتكاملات لصاحب الحساب وحده.</p>}
           </Card>
-          <Card title="نطاق البيانات" subtitle={scoped ? "يرى العقارات المسندة فقط" : "يرى كل عقارات المكتب"}>
+          <Card title="العقارات" subtitle={scoped ? "يعمل على العقارات المحددة فقط" : "يعمل على كل عقارات المكتب"}>
             {scoped && e.assignments.length === 0 && (
               <div className="mb-3">
-                <Alert tone="warning">لا توجد عقارات مسندة — يرى هذا الموظف كل العقارات حتى يتم تحديد نطاقه.</Alert>
+                <Alert tone="warning">لا توجد عقارات محددة — لن يرى هذا الموظف أي عقار حتى تُحدد له.</Alert>
               </div>
             )}
-            {e.assignments.length === 0 ? (
-              <p className="text-[13px] text-faint">لا توجد عقارات مسندة.</p>
+            {!scoped ? (
+              <p className="text-[14px] text-muted">{isOwnerRole ? "صاحب الحساب يرى كل العقارات دائمًا." : "يرى كل العقارات الحالية وأي عقار يُضاف لاحقًا."}</p>
             ) : (
               <ul className="space-y-1">
                 {e.assignments.map((a) => (
-                  <li key={a.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 text-[13.5px] hover:bg-mist">
+                  <li key={a.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 text-[14px] hover:bg-mist">
                     <Link href={`/properties/${a.property.id}`} className="link">
                       {a.property.name}
                     </Link>
-                    <span className="latin text-[11.5px] text-muted">{a.property.code}</span>
+                    <span className="latin text-[12px] text-muted">{a.property.code}</span>
                   </li>
                 ))}
               </ul>
-            )}
-            {canManage && (
-              <div className="mt-3">
-                <Link href={`/employees/${e.id}/edit`} className="btn btn-outline btn-xs">
-                  تعديل النطاق
-                </Link>
-              </div>
             )}
           </Card>
         </div>

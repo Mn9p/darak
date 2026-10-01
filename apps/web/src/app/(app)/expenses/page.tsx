@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { can, propertyIdScope, propertyScope } from "@/lib/permissions";
+import { can, isAccountOwner, propertyIdScope, propertyScope } from "@/lib/permissions";
 import { EXPENSE_CATEGORIES, APPROVAL_STATUS } from "@/lib/constants";
 import { money, date, startOfMonth, endOfMonth, monthLabel, pageParam } from "@/lib/format";
 import { PageHeader, Card, Table, StatusTag, EmptyState, Pagination, FilterBar, Input, Select, StatGrid, StatCard, ActionButton } from "@/components/ui";
@@ -68,7 +68,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
   const pendingAmount = (pendingAll._sum.amount ?? 0) + (pendingAll._sum.vatAmount ?? 0);
   const hasFilters = Boolean(sp.q || sp.category || sp.approval || sp.propertyId || sp.ownerId || sp.from || sp.to);
   const canApprove = can(user, "expenses.approve");
-  const isManager = ["OFFICE_MANAGER", "SUPER_ADMIN"].includes(user.role);
+  const isManager = isAccountOwner(user);
   const approvalLimit = canApprove && !isManager ? (await getOrgSettings(org)).managerApprovalLimit : Number.POSITIVE_INFINITY;
 
   return (
@@ -92,7 +92,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
         title="المصروفات: ما يُصرف على العقار ويُخصم من كشف المالك"
         steps={[
           "سجّل المصروف على العقار (أو الوحدة) مع الفئة والمبلغ وصورة الفاتورة.",
-          "ما يتجاوز حد الاعتماد ينتظر موافقة مدير المكتب.",
+          "ما يتجاوز حد الاعتماد ينتظر موافقة صاحب الحساب.",
           "المصروف المعتمد يُخصم تلقائيًا من كشف حساب المالك في فترته.",
         ]}
         cta={properties.length ? { href: "/expenses/new", label: "تسجيل مصروف" } : { href: "/properties/new", label: "ابدأ بإضافة عقار" }}
@@ -181,7 +181,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
                   </td>
                   {canApprove && (
                     <td>
-                      {e.approvalStatus === "PENDING" && e.amount + e.vatAmount > approvalLimit && <span className="text-[11.5px] text-muted">يعتمده مدير المكتب</span>}
+                      {e.approvalStatus === "PENDING" && e.amount + e.vatAmount > approvalLimit && <span className="text-[11.5px] text-muted">يعتمده صاحب الحساب</span>}
                       {e.approvalStatus === "PENDING" && e.amount + e.vatAmount <= approvalLimit && (
                         <div className="flex items-center gap-1">
                           <ActionButton action={approveExpense} hidden={{ id: e.id }} className="btn btn-success-soft btn-xs">

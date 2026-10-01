@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
-import { assertCan } from "@/lib/permissions";
+import { assertCan, can } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { nextCode } from "@/lib/codes";
 import { computeOwnerStatement, freezeStatement, unfreezeStatement } from "@/lib/engine";
@@ -161,8 +161,8 @@ async function transition(id: string, from: string[], to: string, extra?: { paid
   const s = await loadStatement(id, org);
   if (!s) return null;
   if (!from.includes(s.status)) throw new Error("لا يمكن تنفيذ هذا الانتقال من الحالة الحالية لكشف الحساب.");
-  if (to === "APPROVED" && !["OFFICE_MANAGER", "ACCOUNTANT", "SUPER_ADMIN"].includes(user.role)) {
-    throw new Error("اعتماد كشف الحساب متاح لمدير المكتب أو المحاسب فقط.");
+  if (to === "APPROVED" && !can(user, "statements.approve")) {
+    throw new Error("اعتماد كشف الحساب يتطلب صلاحية «اعتماد الكشوف».");
   }
   if (s.status === "DRAFT" && to !== "DRAFT") {
     // Leaving DRAFT locks the statement: freeze its lines and totals as computed now (ledger).
@@ -205,7 +205,7 @@ export async function submitStatement(formData: FormData) {
     if (!r) return;
     await notify({
       organizationId: r.user.organizationId,
-      roles: ["OFFICE_MANAGER", "ACCOUNTANT"],
+      audience: ["statements.approve"],
       title: `كشف الحساب ${r.s.code} بانتظار المراجعة — ${r.s.owner.name}`,
       body: `صافي المستحق ${money(r.s.netDue)} ر.س`,
       entityType: "STATEMENT",

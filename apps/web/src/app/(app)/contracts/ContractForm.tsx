@@ -292,7 +292,7 @@ export function ContractForm({
             <input type="checkbox" name="activate" className="mt-1" defaultChecked={canApprove} />
             <span>
               <b>تفعيل مباشرة</b>
-              <span className="block text-[12.5px] text-muted">{canApprove ? "يُنشأ العقد نشطًا مع جدول الأقساط وتصبح الوحدة مؤجرة." : "يُرسل العقد لمدير المكتب بانتظار الاعتماد."}</span>
+              <span className="block text-[12.5px] text-muted">{canApprove ? "يُنشأ العقد نشطًا مع جدول الأقساط وتصبح الوحدة مؤجرة." : "يُرسل العقد لصاحب الحساب بانتظار الاعتماد."}</span>
             </span>
           </label>
         )}

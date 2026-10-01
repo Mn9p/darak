@@ -95,7 +95,7 @@ model NotificationRule {
   event          String // CONTRACT_EXPIRING | INSTALLMENT_DUE | INSTALLMENT_OVERDUE | BROKEN_PROMISE | UNIT_VACANT | MAINTENANCE_CRITICAL | DOCUMENT_EXPIRING | SYNC_FAILED | EXPENSE_APPROVAL
   daysBefore     Int          @default(0)
   channels       String       @default("IN_APP")
-  targetRoles    String       @default("OFFICE_MANAGER")
+  targetRoles    String       @default("ACCOUNT_OWNER") // comma list: ACCOUNT_OWNER, EMPLOYEE, TENANT
   createTask     Boolean      @default(false)
   isActive       Boolean      @default(true)
   createdAt      DateTime     @default(now())

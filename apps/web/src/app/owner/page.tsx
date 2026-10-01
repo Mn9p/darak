@@ -104,7 +104,7 @@ export default async function OwnerDashboard() {
           </div>
           <div className="mt-1 text-[12.5px] text-muted">{statementsDue._count > 0 ? `من ${num(statementsDue._count)} كشف حساب معتمد بانتظار التحويل` : "لا توجد كشوف حساب مستحقة حاليًا"}</div>
         </div>
-        <div className="mt-5 grid grid-cols-3 gap-3 border-t border-[#ECDFC8] pt-4">
+        <div className="mt-5 grid grid-cols-3 gap-3 border-t border-[#F0E2BF] pt-4">
           <Big label="الإشغال" value={pct(occupancy, 0)} sub={`${num(rented)} من ${num(totalUnits)} وحدة`} href="/owner/properties" />
           <Big label="تم تحصيله هذا الشهر" value={money(monthCollected)} sub={monthLabel(now)} href="/owner/collections" />
           <Big label="متأخرات" value={money(overdueAmt)} sub={`${num(arrears.length)} دفعة`} href="/owner/collections" tone={overdueAmt > 0 ? "text-danger" : undefined} />

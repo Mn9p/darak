@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 const FREQ: Record<string, string> = { daily: "يومي", weekly: "أسبوعي", monthly: "شهري" };
 
 const DEMO_SCHEDULES = [
-  { name: "ملخص التحصيل الأسبوعي", desc: "التحصيل والمتأخرات لمدير المكتب والمحاسب.", frequency: "weekly", channel: "EMAIL" },
+  { name: "ملخص التحصيل الأسبوعي", desc: "التحصيل والمتأخرات لصاحب الحساب.", frequency: "weekly", channel: "EMAIL" },
   { name: "كشوف الملاك الشهرية", desc: "كشف حساب الشهر السابق لكل مالك.", frequency: "monthly", channel: "EMAIL" },
 ];
 
@@ -54,7 +54,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       {!financial && (
         <div className="mb-4">
-          <Alert tone="neutral">التقارير المالية متاحة لمدير المكتب والمحاسب والمدقق فقط.</Alert>
+          <Alert tone="neutral">التقارير المالية تتطلب صلاحية «التقارير المالية» من صاحب الحساب.</Alert>
         </div>
       )}
       {sp.saved && (

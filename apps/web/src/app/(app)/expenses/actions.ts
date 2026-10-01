@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireStaff, type SessionUser } from "@/lib/auth";
-import { assertCan, can, propertyIdScope, propertyScope } from "@/lib/permissions";
+import { assertCan, can, isAccountOwner, propertyIdScope, propertyScope } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { nextCode } from "@/lib/codes";
 import { getOrgSettings } from "@/lib/engine";
@@ -32,7 +32,7 @@ const schema = z.object({
 });
 
 const AUTO_NOTE = "اعتماد تلقائي حسب السياسة";
-const MANAGER_NOTE = "يتطلب اعتماد مدير المكتب (تجاوز حد الاعتماد)";
+const MANAGER_NOTE = "يتطلب اعتماد صاحب الحساب (تجاوز حد الاعتماد)";
 
 function parse(formData: FormData) {
   const raw: Record<string, unknown> = {};
@@ -115,7 +115,8 @@ async function requestApproval(user: SessionUser & { organizationId: string }, e
   const total = exp.amount + exp.vatAmount;
   await notify({
     organizationId: org,
-    roles: requiresManager ? ["OFFICE_MANAGER"] : ["OFFICE_MANAGER", "ACCOUNTANT"],
+    owners: true,
+    audience: requiresManager ? undefined : ["expenses.approve"],
     title: `طلب اعتماد مصروف ${exp.code} — ${money(total)} ر.س`,
     body: `${exp.description} · ${exp.propertyName} · سجّله ${user.name}`,
     severity: requiresManager ? "WARNING" : "INFO",
@@ -126,8 +127,8 @@ async function requestApproval(user: SessionUser & { organizationId: string }, e
   await autoTask({
     organizationId: org,
     title: `اعتماد مصروف ${exp.code}`,
-    description: `${exp.description} — ${money(total)} ر.س · ${exp.propertyName}${requiresManager ? " · يتطلب اعتماد مدير المكتب" : ""}`,
-    role: requiresManager ? "OFFICE_MANAGER" : "ACCOUNTANT",
+    description: `${exp.description} — ${money(total)} ر.س · ${exp.propertyName}${requiresManager ? " · يتطلب اعتماد صاحب الحساب" : ""}`,
+    assignee: requiresManager ? "OWNER" : "expenses.approve",
     priority: requiresManager ? "HIGH" : "MEDIUM",
     entityType: "EXPENSE",
     entityId: exp.id,
@@ -253,7 +254,7 @@ export async function updateExpense(_prev: FormState, formData: FormData): Promi
     // Approved expenses edited by an approver stay approved — unless the new total is above what this editor may approve
     // (BR-007: above the manager limit only the office manager approves), then it goes back to the queue for the manager.
     // A rejected one goes back to the approval queue; otherwise re-run BR-007.
-    const isManager = ["OFFICE_MANAGER", "SUPER_ADMIN"].includes(user.role);
+    const isManager = isAccountOwner(user);
     const decision =
       old.approvalStatus === "APPROVED"
         ? total > settings.managerApprovalLimit && !isManager && total > old.amount + old.vatAmount + 0.001
@@ -334,8 +335,8 @@ export async function approveExpense(formData: FormData) {
     if (e.approvalStatus !== "PENDING") throw new Error("هذا المصروف ليس بانتظار الاعتماد.");
     const settings = await getOrgSettings(org);
     const total = e.amount + e.vatAmount;
-    if (total > settings.managerApprovalLimit && !["OFFICE_MANAGER", "SUPER_ADMIN"].includes(user.role)) {
-      throw new Error(`هذا المصروف يتجاوز حد الاعتماد (${money(settings.managerApprovalLimit)} ر.س) ويتطلب اعتماد مدير المكتب.`);
+    if (total > settings.managerApprovalLimit && !isAccountOwner(user)) {
+      throw new Error(`هذا المصروف يتجاوز حد الاعتماد (${money(settings.managerApprovalLimit)} ر.س) ويتطلب اعتماد صاحب الحساب.`);
     }
     const moved = await db.expense.updateMany({ where: { id, approvalStatus: "PENDING" }, data: { approvalStatus: "APPROVED", approvedById: user.id, approvedAt: new Date() } });
     if (moved.count !== 1) throw new Error("تغيرت حالة المصروف قبل الاعتماد. حدّث الصفحة.");

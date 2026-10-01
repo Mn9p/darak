@@ -13,7 +13,9 @@ type Support = { whatsapp: string | null; phoneDisplay: string | null; email: st
  * numbers simply never receive a code), so the code step always explains what to do when nothing arrives.
  * The server decides the step; this component only renders it and keeps the phone across steps.
  */
-export function LoginForm({ next, expired, startPhone, support }: { next?: string; expired?: boolean; startPhone?: string; support: Support }) {
+type TestAccount = { phone: string; label: string; hint: string };
+
+export function LoginForm({ next, expired, startPhone, support, testAccounts = [] }: { next?: string; expired?: boolean; startPhone?: string; support: Support; testAccounts?: TestAccount[] }) {
   const [reqState, requestCode, requesting] = useActionState<LoginState, FormData>(requestCodeAction, null);
   const [verState, verifyCode, verifying] = useActionState<LoginState, FormData>(verifyCodeAction, null);
   const [navigating, setNavigating] = useState(false);
@@ -192,6 +194,32 @@ export function LoginForm({ next, expired, startPhone, support }: { next?: strin
         {requesting ? "جارٍ إرسال الرمز…" : "إرسال رمز الدخول"}
       </button>
       <p className="text-center text-[12px] text-faint">الأرقام المسجلة لدى مكتبك فقط. لا يُرسل رمز لأي رقم غير مسجل.</p>
+      {testAccounts.length > 0 && (
+        <details className="rounded-2xl border border-dashed border-sand bg-sand-75 px-4 py-3" open>
+          <summary className="flex items-center justify-between text-[13.5px] font-bold text-ink">
+            حسابات تجريبية
+            <span className="text-[12px] font-medium text-muted">الرمز يظهر على الشاشة</span>
+          </summary>
+          <p className="mt-1 text-[12.5px] text-muted">اختر دورًا لتجربة المنصة ببيانات وهمية، ثم اضغط «إرسال رمز الدخول».</p>
+          <ul className="mt-2 grid gap-1.5">
+            {testAccounts.map((a) => (
+              <li key={a.phone}>
+                <button
+                  type="button"
+                  onClick={() => setPhoneInput(localPhone(a.phone))}
+                  className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-right transition ${localPhone(phoneInput) === localPhone(a.phone) ? "border-brand bg-white" : "border-transparent bg-white/60 hover:bg-white"}`}
+                >
+                  <span className="min-w-0">
+                    <b className="block text-[13.5px] text-ink">{a.label}</b>
+                    <span className="block text-[12px] text-muted">{a.hint}</span>
+                  </span>
+                  <span className="num shrink-0 text-[13px] text-text-2">{localPhone(a.phone)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </form>
   );
 }

@@ -1,20 +1,21 @@
 import { notFound } from "next/navigation";
-import { requireRole } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { propertyScope } from "@/lib/permissions";
 import { PageHeader } from "@/components/ui";
 import { PropertyForm } from "../../PropertyForm";
 import { updateProperty } from "../../actions";
+import { teamWith } from "@/lib/team";
 
 export default async function EditPropertyPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireRole(["OFFICE_MANAGER", "PROPERTY_MANAGER"]);
+  const user = await requirePermission("properties.manage");
   const { id } = await params;
   const org = user.organizationId;
   const property = await db.property.findFirst({ where: { id, organizationId: org, ...propertyScope(user) }, include: { ownerships: { where: { endDate: null } } } });
   if (!property) notFound();
   const [branches, managers, owners] = await Promise.all([
     db.branch.findMany({ where: { organizationId: org }, select: { id: true, name: true } }),
-    db.user.findMany({ where: { organizationId: org, role: { in: ["OFFICE_MANAGER", "PROPERTY_MANAGER"] }, status: "ACTIVE" }, select: { id: true, name: true } }),
+    teamWith(org, "properties.manage"),
     db.owner.findMany({ where: { organizationId: org, status: "ACTIVE" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   const plain = JSON.parse(JSON.stringify(property));

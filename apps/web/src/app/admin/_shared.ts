@@ -18,15 +18,15 @@ export function readFlags(settings: string): Record<string, boolean> {
 }
 
 export const DEFAULT_RULES = [
-  { name: "تنبيه انتهاء عقد — 90 يوم", event: "CONTRACT_EXPIRING", daysBefore: 90, channels: "IN_APP", targetRoles: "PROPERTY_MANAGER", createTask: false },
-  { name: "مهمة متابعة تجديد — 60 يوم", event: "CONTRACT_EXPIRING", daysBefore: 60, channels: "IN_APP,EMAIL", targetRoles: "LEASING", createTask: true },
-  { name: "تصعيد انتهاء عقد — 30 يوم", event: "CONTRACT_EXPIRING", daysBefore: 30, channels: "IN_APP,EMAIL", targetRoles: "OFFICE_MANAGER", createTask: false },
+  { name: "تنبيه انتهاء عقد — 90 يوم", event: "CONTRACT_EXPIRING", daysBefore: 90, channels: "IN_APP", targetRoles: "EMPLOYEE", createTask: false },
+  { name: "مهمة متابعة تجديد — 60 يوم", event: "CONTRACT_EXPIRING", daysBefore: 60, channels: "IN_APP,EMAIL", targetRoles: "EMPLOYEE", createTask: true },
+  { name: "تصعيد انتهاء عقد — 30 يوم", event: "CONTRACT_EXPIRING", daysBefore: 30, channels: "IN_APP,EMAIL", targetRoles: "ACCOUNT_OWNER", createTask: false },
   { name: "تذكير المستأجر قبل الاستحقاق", event: "INSTALLMENT_DUE", daysBefore: 7, channels: "SMS,WHATSAPP", targetRoles: "TENANT", createTask: false },
-  { name: "فتح مطالبة عند التأخر", event: "INSTALLMENT_OVERDUE", daysBefore: 0, channels: "IN_APP", targetRoles: "COLLECTOR", createTask: true },
-  { name: "وعد سداد مكسور", event: "BROKEN_PROMISE", daysBefore: 0, channels: "IN_APP", targetRoles: "COLLECTOR,OFFICE_MANAGER", createTask: true },
-  { name: "انتهاء مستند", event: "DOCUMENT_EXPIRING", daysBefore: 30, channels: "IN_APP", targetRoles: "OFFICE_MANAGER", createTask: true },
-  { name: "فشل مزامنة تكامل", event: "SYNC_FAILED", daysBefore: 0, channels: "IN_APP,EMAIL", targetRoles: "OFFICE_MANAGER", createTask: false },
-  { name: "طلب اعتماد مصروف", event: "EXPENSE_APPROVAL", daysBefore: 0, channels: "IN_APP", targetRoles: "OFFICE_MANAGER,ACCOUNTANT", createTask: false },
+  { name: "فتح مطالبة عند التأخر", event: "INSTALLMENT_OVERDUE", daysBefore: 0, channels: "IN_APP", targetRoles: "EMPLOYEE", createTask: true },
+  { name: "وعد سداد مكسور", event: "BROKEN_PROMISE", daysBefore: 0, channels: "IN_APP", targetRoles: "EMPLOYEE,ACCOUNT_OWNER", createTask: true },
+  { name: "انتهاء مستند", event: "DOCUMENT_EXPIRING", daysBefore: 30, channels: "IN_APP", targetRoles: "ACCOUNT_OWNER", createTask: true },
+  { name: "فشل مزامنة تكامل", event: "SYNC_FAILED", daysBefore: 0, channels: "IN_APP,EMAIL", targetRoles: "ACCOUNT_OWNER", createTask: false },
+  { name: "طلب اعتماد مصروف", event: "EXPENSE_APPROVAL", daysBefore: 0, channels: "IN_APP", targetRoles: "ACCOUNT_OWNER,EMPLOYEE", createTask: false },
 ];
 
 /** Real DB ping used by the overview and health pages. */

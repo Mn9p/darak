@@ -53,7 +53,7 @@ export function RequestForm({ cities }: { cities: string[] }) {
       {/* honeypot */}
       <input name="website" tabIndex={-1} autoComplete="off" className="request-hp" aria-hidden="true" />
       {state?.error && <div className="request-error">{state.error}</div>}
-      <button type="submit" className="btn btn-accent landing-cta-main request-submit" disabled={pending}>
+      <button type="submit" className="btn btn-primary request-submit" disabled={pending}>
         {pending ? "جارٍ الإرسال…" : "اطلب حسابًا لمكتبك"}
       </button>
     </form>

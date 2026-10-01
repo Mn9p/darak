@@ -10,6 +10,8 @@ import { addMonths, daysFromToday, daysOverdue, safeJson, addDays, date as fmtDa
 import { autoTask, notify } from "./notify";
 import { sendMessage, renderTemplate, type Channel, type SendResult } from "./channels";
 import { logger } from "./logger";
+import type { Permission } from "./permissions";
+import { defaultAssignee } from "./team";
 
 export async function getOrgSettings(organizationId: string): Promise<OrgSettings> {
   const org = await db.organization.findUnique({ where: { id: organizationId }, select: { settings: true } });
@@ -272,7 +274,7 @@ export async function runEngine(organizationId: string) {
           organizationId,
           title: `وحدة شاغرة بعد انتهاء العقد — ${c.unit.number}`,
           description: `انتهى العقد ${c.code} للمستأجر ${c.tenant.name}. يرجى تجهيز الوحدة للتأجير.`,
-          role: "LEASING",
+          assignee: "leasing.manage",
           priority: "HIGH",
           entityType: "UNIT",
           entityId: c.unitId,
@@ -289,7 +291,7 @@ export async function runEngine(organizationId: string) {
           organizationId,
           title: `متابعة تجديد العقد ${c.code} — ${c.tenant.name}`,
           description: `ينتهي العقد خلال ${toEnd} يومًا. تواصل مع المستأجر لتحديد رغبته بالتجديد.`,
-          role: "LEASING",
+          assignee: "leasing.manage",
           priority: toEnd <= 30 ? "URGENT" : "HIGH",
           dueDate: addDays(now, 7),
           entityType: "CONTRACT",
@@ -310,7 +312,7 @@ export async function runEngine(organizationId: string) {
       }
       if (toEnd <= 30 && !c.renewalStatus) {
         await notifyOnce(organizationId, `تصعيد: العقد ${c.code} ينتهي خلال ${toEnd} يومًا بدون قرار تجديد`, {
-          roles: ["OFFICE_MANAGER"],
+          owners: true,
           userIds: c.property.managerId ? [c.property.managerId] : [],
           severity: "DANGER",
           entityType: "CONTRACT",
@@ -350,7 +352,8 @@ export async function runEngine(organizationId: string) {
     if (["DUE", "OVERDUE"].includes(next) || (next === "PARTIALLY_PAID" && late > 0)) {
       let kase = inst.collectionCase;
       if (!kase) {
-        const collector = await db.user.findFirst({ where: { organizationId, role: "COLLECTOR", status: "ACTIVE" }, select: { id: true } });
+        // New claims go to an employee who handles collections; with none, they stay unassigned for the owner to assign.
+        const collector = { id: await defaultAssignee(organizationId, "collections.manage", { fallbackToOwner: false }) };
         try {
           const created = await db.collectionCase.create({
             data: { organizationId, installmentId: inst.id, collectorId: collector?.id ?? null, followUpStatus: "OPEN" },
@@ -383,7 +386,7 @@ export async function runEngine(organizationId: string) {
         await db.collectionAction.create({ data: { caseId: kase.id, type: "SYSTEM", outcome: "REFUSED", note: "مر تاريخ وعد السداد دون استلام دفعة — وعد مكسور." } });
         await notify({
           organizationId,
-          roles: ["OFFICE_MANAGER"],
+          owners: true,
           title: `وعد سداد مكسور — ${inst.tenant.name}`,
           body: `الوحدة ${inst.contract.unit.number} · المتبقي ${Math.round(remaining)} ريال`,
           severity: "DANGER",
@@ -410,7 +413,7 @@ export async function runEngine(organizationId: string) {
         await db.collectionCase.update({ where: { id: kase.id }, data: { followUpStatus: "ESCALATED", escalatedAt: now } });
         await db.collectionAction.create({ data: { caseId: kase.id, type: "ESCALATION", note: `تصعيد تلقائي: التأخر ${late} يومًا والمبلغ ${Math.round(remaining)} ريال.` } });
         await notifyOnce(organizationId, `تصعيد مطالبة — ${inst.tenant.name}`, {
-          roles: ["OFFICE_MANAGER"],
+          owners: true,
           severity: "DANGER",
           entityType: "COLLECTION",
           entityId: kase.id,
@@ -477,7 +480,7 @@ export async function runEngine(organizationId: string) {
       title: `تجديد مستند: ${d.name}`,
       description: left < 0 ? `انتهى المستند قبل ${-left} يومًا.` : `ينتهي المستند خلال ${left} يومًا.`,
       assignedToId: d.uploadedById,
-      role: "OFFICE_MANAGER",
+      assignee: "OWNER",
       priority: left <= 7 ? "URGENT" : "MEDIUM",
       dueDate: d.expiryDate,
       entityType: "DOCUMENT",
@@ -490,7 +493,8 @@ export async function runEngine(organizationId: string) {
   const pending = await db.expense.count({ where: { organizationId, approvalStatus: "PENDING" } });
   if (pending > 0) {
     await notifyOnce(organizationId, `يوجد ${pending} مصروف بانتظار الاعتماد`, {
-      roles: ["OFFICE_MANAGER"],
+      owners: true,
+      audience: ["expenses.approve"],
       severity: "INFO",
       entityType: "EXPENSE",
       href: "/expenses?approval=PENDING",
@@ -501,7 +505,7 @@ export async function runEngine(organizationId: string) {
   const failed = await db.integration.findMany({ where: { organizationId, status: "ERROR" }, select: { id: true, name: true, lastError: true } });
   for (const f of failed) {
     await notifyOnce(organizationId, `فشل المزامنة: ${f.name}`, {
-      roles: ["OFFICE_MANAGER"],
+      owners: true,
       severity: "DANGER",
       entityType: "INTEGRATION",
       entityId: f.id,
@@ -615,7 +619,7 @@ async function sentRecently(organizationId: string, entityId: string, days: numb
 async function notifyOnce(
   organizationId: string,
   title: string,
-  opts: { roles?: string[]; userIds?: string[]; severity?: "INFO" | "WARNING" | "DANGER" | "SUCCESS"; entityType?: string; entityId?: string; href?: string },
+  opts: { owners?: boolean; audience?: Permission[]; userIds?: string[]; severity?: "INFO" | "WARNING" | "DANGER" | "SUCCESS"; entityType?: string; entityId?: string; href?: string },
 ) {
   const since = addDays(new Date(), -1);
   const exists = await db.notification.findFirst({

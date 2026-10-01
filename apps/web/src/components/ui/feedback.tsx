@@ -11,7 +11,7 @@ export function Alert({ tone = "info", children, title }: { tone?: Tone; childre
     brand: "bg-sand-75 text-brand",
   };
   return (
-    <div className={`rounded-xl px-4 py-3 text-[13.5px] ${map[tone]}`} role={tone === "danger" ? "alert" : "status"}>
+    <div className={`rounded-2xl px-4 py-3 text-[14px] ${map[tone]}`} role={tone === "danger" ? "alert" : "status"}>
       {title && <div className="font-bold">{title}</div>}
       <div>{children}</div>
     </div>

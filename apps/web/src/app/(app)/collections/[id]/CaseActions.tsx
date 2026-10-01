@@ -63,7 +63,7 @@ export function CaseActions({
   return (
     <div className="space-y-3">
       {!canManage ? (
-        <p className="text-[13px] text-muted">صلاحيتك للعرض فقط. الإجراءات متاحة للمحصل ومدير المكتب.</p>
+        <p className="text-[13px] text-muted">صلاحيتك للعرض فقط. الإجراءات متاحة لمن يملك صلاحية متابعة المطالبات.</p>
       ) : (
         <>
           <div className="flex flex-wrap gap-1">
@@ -111,7 +111,7 @@ export function CaseActions({
               <Field label="سبب الطلب" name="note" required>
                 <Textarea name="note" rows={3} required placeholder="سبب المستأجر لطلب التمديد" />
               </Field>
-              <p className="help">يُسجَّل كوعد سداد بالتاريخ الجديد ويُشعر مدير المكتب.</p>
+              <p className="help">يُسجَّل كوعد سداد بالتاريخ الجديد ويُشعر صاحب الحساب.</p>
             </MiniForm>
           )}
 
@@ -126,12 +126,12 @@ export function CaseActions({
           {panel === "escalate" && (
             <MiniForm action={escalateCase} caseId={caseId} submit="تصعيد" tone="danger">
               <Field label="نوع التصعيد" name="kind" required>
-                <Select name="kind" options={{ INTERNAL: "تصعيد داخلي لمدير المكتب", NAJIZ: "تجهيز طلب تنفيذ مالي عبر ناجز" }} defaultValue={enforceable ? "NAJIZ" : "INTERNAL"} />
+                <Select name="kind" options={{ INTERNAL: "تصعيد داخلي لصاحب الحساب", NAJIZ: "تجهيز طلب تنفيذ مالي عبر ناجز" }} defaultValue={enforceable ? "NAJIZ" : "INTERNAL"} />
               </Field>
               <Field label="السبب أو الملاحظة" name="note">
                 <Textarea name="note" rows={3} placeholder="اختياري" />
               </Field>
-              {enforceable ? <p className="help">انتهت مهلة السداد لهذه الدفعة، فيمكن للمكتب تقديم طلب التنفيذ عبر ناجز بعد موافقة المدير.</p> : <p className="help">يُنشئ إشعارًا ومهمة عاجلة لمدير المكتب.</p>}
+              {enforceable ? <p className="help">انتهت مهلة السداد لهذه الدفعة، فيمكن للمكتب تقديم طلب التنفيذ عبر ناجز بعد موافقة صاحب الحساب.</p> : <p className="help">يُنشئ إشعارًا ومهمة عاجلة لصاحب الحساب.</p>}
             </MiniForm>
           )}
 

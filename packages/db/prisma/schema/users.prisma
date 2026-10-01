@@ -10,7 +10,12 @@ model User {
   /// Login identity: Saudi mobile normalized to 9665XXXXXXXX (see apps/web/src/lib/phone.ts). One account per number.
   phone             String        @unique
   email             String?
-  role              String // SUPER_ADMIN | OFFICE_MANAGER | PROPERTY_MANAGER | LEASING | COLLECTOR | ACCOUNTANT | OWNER | TENANT | AUDITOR
+  /// ACCOUNT_OWNER (full office access) | EMPLOYEE (permissions below) | OWNER (property-owner portal) | TENANT (tenant portal) | SUPER_ADMIN
+  role              String
+  /// EMPLOYEE only: JSON array of permission keys granted by an account owner (apps/web/src/lib/permissions.ts).
+  permissions       String        @default("[]")
+  /// EMPLOYEE only: false = limited to the properties in PropertyAssignment.
+  allProperties     Boolean       @default(true)
   status            String        @default("ACTIVE") // ACTIVE | INACTIVE | INVITED
   employeeCode      String?
   department        String?

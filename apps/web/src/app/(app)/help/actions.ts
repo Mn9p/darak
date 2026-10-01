@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/auth";
 import { audit } from "@/lib/audit";
-import { notify, emailRoles } from "@/lib/notify";
+import { notify, emailOwners } from "@/lib/notify";
 import type { FormState } from "@/components/ui";
 
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];
@@ -26,7 +26,7 @@ export async function createTicket(_prev: FormState, formData: FormData): Promis
     await audit({ user, action: "CREATE", entityType: "SUPPORT_TICKET", entityId: t.id, entityLabel: t.subject, newValue: { priority } });
     await notify({
       organizationId: user.organizationId,
-      roles: ["OFFICE_MANAGER"],
+      owners: true,
       title: `تذكرة دعم جديدة: ${t.subject}`,
       body: `بواسطة ${user.name} · الأولوية ${priority}`,
       severity: priority === "URGENT" || priority === "HIGH" ? "WARNING" : "INFO",
@@ -35,9 +35,8 @@ export async function createTicket(_prev: FormState, formData: FormData): Promis
       href: "/help?tab=tickets",
     });
     // Email office managers (simulated + logged when no email provider). Never throws.
-    await emailRoles({
+    await emailOwners({
       organizationId: user.organizationId,
-      roles: ["OFFICE_MANAGER"],
       subject: `تذكرة دعم جديدة: ${t.subject}`,
       body: `تذكرة دعم جديدة من ${user.name} (الأولوية: ${priority}).\n\nالعنوان: ${t.subject}\n\n${t.body}\n\nللمتابعة: ${process.env.APP_URL ?? ""}/help?tab=tickets`,
       entityType: "SUPPORT_TICKET",

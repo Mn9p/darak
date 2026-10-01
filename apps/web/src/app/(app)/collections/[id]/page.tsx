@@ -10,6 +10,7 @@ import { MoreMenu, Optional } from "@/components/MoreMenu";
 import { CaseActions } from "./CaseActions";
 import { sendTemplate, renderTemplate } from "../actions";
 import { displayPhone, telHref } from "@/lib/phone";
+import { teamWith } from "@/lib/team";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export default async function CollectionCasePage({ params }: { params: Promise<{
   ];
 
   const [collectors, templates] = await Promise.all([
-    db.user.findMany({ where: { organizationId: org, role: { in: ["COLLECTOR", "OFFICE_MANAGER"] }, status: "ACTIVE" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    teamWith(org, "collections.manage"),
     db.notificationTemplate.findMany({ where: { organizationId: org, isActive: true, event: { in: ["INSTALLMENT_DUE", "INSTALLMENT_OVERDUE"] } }, orderBy: { name: "asc" } }),
   ]);
   const vars = { tenant_name: inst.tenant.name, unit_number: inst.contract.unit.number, amount: money(remaining), due_date: date(inst.dueDate) };

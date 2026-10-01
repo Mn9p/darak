@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC = ["/login", "/privacy", "/terms", "/api/cron", "/api/health", "/_next", "/favicon", "/logo-mark", "/brand"];
+const PUBLIC = ["/login", "/privacy", "/terms", "/api/cron", "/api/health", "/_next", "/favicon", "/logo-mark", "/brand", "/screenshots"];
 
 /**
  * Content-Security-Policy with a fresh nonce per request: only scripts carrying the nonce (Next adds it to its own
@@ -58,6 +58,6 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     // Every page, RSC and API request — prefetches included: the route guard in requireStaff relies on x-pathname set here.
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.svg$|.*\\.png$|.*\\.ico$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.svg$|.*\\.png$|.*\\.webp$|.*\\.ico$).*)",
   ],
 };

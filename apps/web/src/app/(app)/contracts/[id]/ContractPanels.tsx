@@ -52,7 +52,7 @@ export function RenewalForm({
           <Select name="paymentFrequency" options={PAYMENT_FREQUENCY} defaultValue={frequency} />
         </Field>
       </FormGrid>
-      <p className="text-[12.5px] text-muted">{canApprove ? "سيُنشأ عقد جديد نشط بنفس الأطراف والشروط، ويُحوّل العقد الحالي إلى «تم التجديد»." : "سيُنشأ عقد التجديد بحالة «بانتظار الاعتماد» ويُرسل لمدير المكتب."}</p>
+      <p className="text-[12.5px] text-muted">{canApprove ? "سيُنشأ عقد جديد نشط بنفس الأطراف والشروط، ويُحوّل العقد الحالي إلى «تم التجديد»." : "سيُنشأ عقد التجديد بحالة «بانتظار الاعتماد» ويُرسل لصاحب الحساب."}</p>
       <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>
         {pending ? "جارٍ الإنشاء…" : "إنشاء عقد التجديد"}
       </button>

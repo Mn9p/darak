@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { can, propertyIdScope } from "@/lib/permissions";
+import { can, isAccountOwner, propertyIdScope } from "@/lib/permissions";
 import { getOrgSettings } from "@/lib/engine";
 import { EXPENSE_CATEGORIES, APPROVAL_STATUS, PAYMENT_METHODS, DOCUMENT_TYPES, AUDIT_ACTIONS, TASK_STATUS } from "@/lib/constants";
 import { money, date, datetime, daysFromToday } from "@/lib/format";
@@ -43,7 +43,7 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
   ]);
   const total = e.amount + e.vatAmount;
   const requiresManager = total > settings.managerApprovalLimit;
-  const canApprove = can(user, "expenses.approve") && e.approvalStatus === "PENDING" && (!requiresManager || ["OFFICE_MANAGER", "SUPER_ADMIN"].includes(user.role));
+  const canApprove = can(user, "expenses.approve") && e.approvalStatus === "PENDING" && (!requiresManager || isAccountOwner(user));
   const canEdit = can(user, "expenses.manage") && (e.approvalStatus !== "APPROVED" || can(user, "expenses.approve"));
   const docHref = `/documents/new?entityType=EXPENSE&entityId=${e.id}&entityLabel=${encodeURIComponent(`${e.code} — ${e.description}`)}`;
 
@@ -125,7 +125,7 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
             {tasks.length > 0 && (
               <Card title="مهام الاعتماد المرتبطة">
                 {tasks.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between border-b border-[#EDF1EF] py-2 text-[13px] last:border-0">
+                  <div key={t.id} className="flex items-center justify-between border-b border-line-soft py-2 text-[13px] last:border-0">
                     <div>
                       <Link href={`/tasks/${t.id}`} className="font-semibold hover:text-brand">
                         {t.title}
@@ -152,8 +152,8 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
               <div className="mb-3 text-[12.5px] text-muted">
                 حد الاعتماد التلقائي <span className="num">{money(settings.autoApproveLimit)}</span> ر.س · حد اعتماد المحاسب <span className="num">{money(settings.managerApprovalLimit)}</span> ر.س
               </div>
-              {e.approvalStatus === "PENDING" && requiresManager && <div className="mb-3"><Alert tone="warning">يتجاوز حد اعتماد المحاسب ويتطلب اعتماد مدير المكتب.</Alert></div>}
-              {e.approvalStatus === "PENDING" && !can(user, "expenses.approve") && <Alert tone="info">بانتظار اعتماد المحاسب أو مدير المكتب.</Alert>}
+              {e.approvalStatus === "PENDING" && requiresManager && <div className="mb-3"><Alert tone="warning">يتجاوز حد الاعتماد للموظفين ويتطلب اعتماد صاحب الحساب.</Alert></div>}
+              {e.approvalStatus === "PENDING" && !can(user, "expenses.approve") && <Alert tone="info">بانتظار اعتماد صاحب الحساب أو موظف يملك صلاحية الاعتماد.</Alert>}
               {canApprove && (
                 <form action={rejectExpense} className="space-y-2 border-t border-line pt-3">
                   <input type="hidden" name="id" value={e.id} />

@@ -202,9 +202,10 @@ export function ImportWizard({ entity, onReset }: { entity: ImportEntity; onRese
                   </Tag>
                 ))}
               </div>
-              <Link className="link mt-2 inline-block" href={`/import/template?type=${entity}`}>
+              {/* A file download, not a page: a plain link (next/link would prefetch it as a route and never settle). */}
+              <a className="link mt-2 inline-block" href={`/import/template?type=${entity}`} download>
                 تنزيل القالب
-              </Link>
+              </a>
             </div>
           </div>
           <details className="rounded-xl border border-line px-4 py-3" open={Boolean(text.trim())}>
@@ -424,9 +425,9 @@ export function ImportCenter({ initial }: { initial?: string }) {
               <div className="font-bold text-text">{m.label}</div>
               <div className="mb-3 flex-1 text-[12.5px] text-muted">{m.description}</div>
               <div className="flex items-center justify-between gap-2">
-                <Link className="btn btn-link btn-xs" href={`/import/template?type=${k}`}>
+                <a className="btn btn-link btn-xs" href={`/import/template?type=${k}`} download>
                   تنزيل القالب
-                </Link>
+                </a>
                 <button type="button" className="btn btn-primary btn-xs" onClick={() => setEntity(k)}>
                   استيراد
                 </button>

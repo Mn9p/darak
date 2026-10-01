@@ -6,15 +6,15 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { Field, Input, Select, FormGrid, Alert, Card, type FormState } from "@/components/ui";
 import { Optional } from "@/components/MoreMenu";
-import { NOTIFICATION_EVENTS, NOTIFICATION_CHANNELS, ROLES } from "@/lib/constants";
+import { NOTIFICATION_EVENTS, NOTIFICATION_CHANNELS, RULE_AUDIENCES } from "@/lib/constants";
 
 type Rule = { id: string; name: string; event: string; daysBefore: number; channels: string; targetRoles: string; createTask: boolean; isActive: boolean };
 
 export function RuleForm({ action, rule, onDone }: { action: (prev: FormState, fd: FormData) => Promise<FormState>; rule?: Rule | null; onDone?: () => void }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, null);
   const channels = (rule?.channels ?? "IN_APP").split(",");
-  const roles = (rule?.targetRoles ?? "OFFICE_MANAGER").split(",");
-  const hasExtras = Boolean(rule && (rule.createTask || !rule.isActive || rule.channels !== "IN_APP" || rule.targetRoles !== "OFFICE_MANAGER"));
+  const roles = (rule?.targetRoles ?? "ACCOUNT_OWNER").split(",");
+  const hasExtras = Boolean(rule && (rule.createTask || !rule.isActive || rule.channels !== "IN_APP" || rule.targetRoles !== "ACCOUNT_OWNER"));
   return (
     <form onSubmit={keepFormValues(formAction)} className="space-y-3">
       {rule?.id && <input type="hidden" name="id" value={rule.id} />}
@@ -48,16 +48,15 @@ export function RuleForm({ action, rule, onDone }: { action: (prev: FormState, f
             </div>
           </div>
           <div>
-            <div className="label">الأدوار المستهدفة</div>
+            <div className="label">لمن يُرسل</div>
             <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[13px]">
-              {Object.entries(ROLES)
-                .filter(([k]) => k !== "SUPER_ADMIN")
-                .map(([k, v]) => (
-                  <label key={k} className="flex items-center gap-1.5">
-                    <input type="checkbox" name="targetRoles" value={k} defaultChecked={roles.includes(k)} /> {v.label}
-                  </label>
-                ))}
+              {Object.entries(RULE_AUDIENCES).map(([k, v]) => (
+                <label key={k} className="flex items-center gap-1.5">
+                  <input type="checkbox" name="targetRoles" value={k} defaultChecked={roles.includes(k)} /> {v}
+                </label>
+              ))}
             </div>
+            <p className="help">«الموظفون المعنيون» هم من يملكون صلاحية القسم الذي يخصه الحدث.</p>
           </div>
           <label className="flex items-center gap-2 text-[13px]">
             <input type="checkbox" name="createTask" defaultChecked={rule?.createTask ?? false} /> إنشاء مهمة للموظف المسؤول عند تفعيل القاعدة

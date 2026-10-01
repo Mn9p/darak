@@ -66,29 +66,29 @@ export default async function TenantDashboard() {
       {/* Hero: unit + next payment + two big actions */}
       <section className="card-dark p-5 md:p-6">
         {!contract ? (
-          <p className="text-[13.5px] text-[#C6D2CE]">لا يوجد عقد مرتبط بحسابك حاليًا. تواصل مع المكتب لربطه.</p>
+          <p className="text-[13.5px] text-on-dark-2">لا يوجد عقد مرتبط بحسابك حاليًا. تواصل مع المكتب لربطه.</p>
         ) : (
           <div>
-            <div className="text-[13px] text-[#BCCBC5]">
+            <div className="text-[13px] text-on-dark-2">
               الوحدة <b className="text-white">{contract.unit.number}</b> · {UNIT_TYPES[contract.unit.type] ?? contract.unit.type}
             </div>
             <div className="mt-0.5 text-[20px] font-bold text-white">{contract.property.name}</div>
-            {isActive && <div className="num mt-1 text-[12px] text-[#8FA099]">العقد ساري حتى {date(contract.endDate)}</div>}
+            {isActive && <div className="num mt-1 text-[12px] text-on-dark-3">العقد ساري حتى {date(contract.endDate)}</div>}
           </div>
         )}
 
         <div className="mt-5 border-t border-white/10 pt-5">
-          <div className="text-[13px] font-semibold text-[#BCCBC5]">الدفعة القادمة</div>
+          <div className="text-[13px] font-semibold text-on-dark-2">الدفعة القادمة</div>
           {!next ? (
             <div className="mt-1 text-[15px] font-bold text-sand-200">لا توجد دفعات مستحقة. جميع دفعاتك مسددة.</div>
           ) : (
             <>
-              <div className={`num mt-1 text-[36px] font-extrabold leading-none md:text-[42px] ${next.status === "OVERDUE" ? "text-[#F3B3AE]" : "text-sand-200"}`}>
-                {money(next.amount - next.paidAmount)} <span className="text-[15px] font-semibold text-[#BCCBC5]">ر.س</span>
+              <div className={`num mt-1 text-[36px] font-extrabold leading-none md:text-[42px] ${next.status === "OVERDUE" ? "text-[#FF9E97]" : "text-sand-200"}`}>
+                {money(next.amount - next.paidAmount)} <span className="text-[15px] font-semibold text-on-dark-2">ر.س</span>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[#C6D2CE]">
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-on-dark-2">
                 <span className="num">تستحق {date(next.dueDate)}</span>
-                <span className={`num font-bold ${next.status === "OVERDUE" ? "text-[#F3B3AE]" : "text-white"}`}>
+                <span className={`num font-bold ${next.status === "OVERDUE" ? "text-[#FF9E97]" : "text-white"}`}>
                   {next.status === "OVERDUE" ? `متأخرة ${num(nextLate)} يوم` : nextLate > 0 ? "ضمن مهلة السداد" : nextLeft === 0 ? "تستحق اليوم" : `متبقٍ ${num(nextLeft)} يوم`}
                 </span>
                 <StatusTag value={next.status} map={INSTALLMENT_STATUS} />

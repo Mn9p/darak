@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { can } from "@/lib/permissions";
-import { NOTIFICATION_EVENTS, NOTIFICATION_CHANNELS, ENTITY_TYPES, ROLES, type StatusMeta } from "@/lib/constants";
+import { NOTIFICATION_EVENTS, NOTIFICATION_CHANNELS, ENTITY_TYPES, RULE_AUDIENCES, type StatusMeta } from "@/lib/constants";
 import { datetime, relative, safeJson, pageParam } from "@/lib/format";
 import { displayPhone } from "@/lib/phone";
 import { PageHeader, Card, Tabs, Tag, StatusTag, EmptyState, Pagination, FilterBar, Select, ActionButton, Table, Alert } from "@/components/ui";
@@ -90,7 +90,7 @@ async function Inbox({ userId, org, sp }: { userId: string; org: string; sp: Rec
       {rows.length === 0 ? (
         <EmptyState title={hasFilters ? "لا توجد إشعارات مطابقة" : "لا توجد إشعارات"} description="ستصلك هنا تنبيهات الاستحقاق والتأخر وانتهاء العقود." action={hasFilters ? <Link href="/notifications" className="btn btn-outline">عرض الكل</Link> : undefined} />
       ) : (
-        <ul className="divide-y divide-[#EDF1EF]">
+        <ul className="divide-y divide-line-soft">
           {rows.map((n) => (
             <li key={n.id} className={`flex items-start gap-3 px-5 py-3 ${n.readAt ? "" : "bg-sand-75/40"}`}>
               <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${n.readAt ? "bg-transparent" : "bg-brand"}`} aria-hidden />
@@ -182,9 +182,9 @@ async function RulesTab({ org, manage, editId }: { org: string; manage: boolean;
                   </td>
                   <td>
                     <div className="flex flex-wrap gap-1">
-                      {r.targetRoles.split(",").filter(Boolean).map((c) => (
+                      {[...new Set(r.targetRoles.split(",").filter(Boolean))].map((c) => (
                         <Tag key={c} tone="info" plain>
-                          {ROLES[c as keyof typeof ROLES]?.label ?? c}
+                          {RULE_AUDIENCES[c] ?? c}
                         </Tag>
                       ))}
                     </div>
@@ -220,7 +220,7 @@ async function RulesTab({ org, manage, editId }: { org: string; manage: boolean;
         {manage ? (
           <RuleForm key={editing?.id ?? "new"} action={editing ? updateRule : createRule} rule={editing} />
         ) : (
-          <Alert tone="neutral">إدارة القواعد متاحة لمدير المكتب فقط.</Alert>
+          <Alert tone="neutral">إدارة القواعد متاحة لصاحب الحساب فقط.</Alert>
         )}
       </div>
     </div>
@@ -285,7 +285,7 @@ async function TemplatesTab({ org, manage, editId }: { org: string; manage: bool
         {manage ? (
           <TemplateForm key={editing?.id ?? "new"} action={editing ? updateTemplate : createTemplate} template={editing} />
         ) : (
-          <Alert tone="neutral">إدارة القوالب متاحة لمدير المكتب فقط.</Alert>
+          <Alert tone="neutral">إدارة القوالب متاحة لصاحب الحساب فقط.</Alert>
         )}
         <Card title="المتغيرات المتاحة">
           <ul className="space-y-1 text-[12.5px]">

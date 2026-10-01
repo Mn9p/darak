@@ -33,14 +33,15 @@ export function MoreMenu({ items, label = "المزيد" }: { items: (MoreMenuIt
         </svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full z-40 mt-2 min-w-[190px] rounded-xl border border-line bg-white p-1.5 shadow-float">
+        // Phones: a sheet above the bottom bar (the button may sit at either edge); larger screens: a dropdown.
+        <div className="fixed inset-x-3 bottom-[calc(var(--bnav-h)+var(--safe-b)+10px)] z-50 rounded-2xl border border-line bg-white p-2 shadow-float sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-2 sm:min-w-[200px] sm:rounded-[14px] sm:p-1.5">
           {list.map((it, i) =>
             it.href ? (
-              <Link key={i} href={it.href} onClick={() => setOpen(false)} className={`block rounded-lg px-3 py-2 text-[13px] font-semibold hover:bg-mist ${it.danger ? "text-danger" : "text-text"}`}>
+              <Link key={i} href={it.href} onClick={() => setOpen(false)} className={`block rounded-[10px] px-3 py-3 text-[15px] font-semibold hover:bg-mist sm:py-2.5 sm:text-[14px] ${it.danger ? "text-danger" : "text-text"}`}>
                 {it.label}
               </Link>
             ) : (
-              <div key={i} className="[&_button]:w-full [&_button]:justify-start [&_button]:rounded-lg [&_button]:bg-transparent [&_button]:px-3 [&_button]:py-2 [&_button]:text-right [&_button]:text-[13px] [&_button:hover]:bg-mist">
+              <div key={i} className="[&_button]:min-h-0 [&_button]:w-full [&_button]:justify-start [&_button]:rounded-[10px] [&_button]:border-0 [&_button]:bg-transparent [&_button]:px-3 [&_button]:py-3 [&_button]:text-right [&_button]:text-[15px] sm:[&_button]:py-2.5 sm:[&_button]:text-[14px] [&_button:hover]:bg-mist">
                 {it.node}
               </div>
             ),
@@ -55,7 +56,7 @@ export function MoreMenu({ items, label = "المزيد" }: { items: (MoreMenuIt
 export function Optional({ title, children, open = false, hint }: { title: string; children: ReactNode; open?: boolean; hint?: string }) {
   return (
     <details className="card group" open={open}>
-      <summary className="flex cursor-pointer items-center justify-between px-5 py-3.5 text-[14px] font-bold text-brand">
+      <summary className="flex cursor-pointer items-center justify-between px-4 py-3.5 text-[15px] font-bold text-ink md:px-5">
         <span>
           {title}
           {hint && <span className="mr-2 text-[12px] font-normal text-muted">{hint}</span>}
@@ -64,7 +65,7 @@ export function Optional({ title, children, open = false, hint }: { title: strin
           <path d="m6 9 6 6 6-6" />
         </svg>
       </summary>
-      <div className="border-t border-line px-5 pb-5 pt-4">{children}</div>
+      <div className="border-t border-line px-4 pb-5 pt-4 md:px-5">{children}</div>
     </details>
   );
 }

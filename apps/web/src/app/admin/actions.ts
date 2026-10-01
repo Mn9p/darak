@@ -14,6 +14,7 @@ import { safeJson, addMonths } from "@/lib/format";
 import { normalizePhone, displayPhone } from "@/lib/phone";
 import type { FormState } from "@/components/ui";
 import { DEFAULT_RULES, DEFAULT_FLAGS, readFlags, slugify } from "./_shared";
+import { ensureTestOffice } from "@/lib/test-office";
 
 /* ───────────── Organizations ───────────── */
 
@@ -28,7 +29,7 @@ const orgSchema = z.object({
   plan: z.string().refine((p) => p in PLANS, "الخطة غير صالحة"),
   status: z.enum(["ACTIVE", "TRIAL", "SUSPENDED"]),
   renewalDate: z.string().optional().nullable(),
-  managerName: z.string().min(2, "اسم مدير المكتب مطلوب"),
+  managerName: z.string().min(2, "اسم صاحب الحساب مطلوب"),
   // Login identity of the first manager: stored normalized (9665XXXXXXXX) so OTP sign-in matches.
   managerPhone: z
     .string({ required_error: "رقم الجوال غير صحيح (مثال: 05XXXXXXXX).", invalid_type_error: "رقم الجوال غير صحيح (مثال: 05XXXXXXXX)." })
@@ -83,7 +84,7 @@ export async function createOrganization(_prev: FormState, formData: FormData): 
         });
         orgId = org.id;
         await tx.branch.create({ data: { organizationId: org.id, name: "الفرع الرئيسي", city: d.city ?? null, isMain: true } });
-        await tx.user.create({ data: { organizationId: org.id, name: d.managerName, phone: managerPhone, email: managerEmail, role: "OFFICE_MANAGER", status: "ACTIVE" } });
+        await tx.user.create({ data: { organizationId: org.id, name: d.managerName, phone: managerPhone, email: managerEmail, role: "ACCOUNT_OWNER", status: "ACTIVE" } });
         await tx.notificationRule.createMany({ data: DEFAULT_RULES.map((r) => ({ ...r, organizationId: org.id, isActive: true })) });
         await tx.integration.createMany({
           data: Object.entries(INTEGRATION_PROVIDERS).map(([provider, meta]) => ({ organizationId: org.id, provider, name: meta.label, status: "DISCONNECTED", config: "{}" })),
@@ -198,7 +199,7 @@ const SUPPORT_MIN_MINUTES = 15;
 const SUPPORT_DEFAULT_MINUTES = 60;
 
 /**
- * Support access: audit (org + platform) then open a time-boxed session as the org's OFFICE_MANAGER.
+ * Support access: audit (org + platform) then open a time-boxed session as the org's first account owner.
  * The session row carries supportAdminId, expires after `duration` minutes (15–240) and every audit row written
  * through it is attributed to "دعم دارك — <admin>". The admin's own cookie is replaced; ending the session sends them to /login.
  */
@@ -213,7 +214,7 @@ export async function supportAccess(formData: FormData) {
     if (reason.length < 5) redirect(`/admin/organizations/${id}?error=reason`);
     const org = await db.organization.findUnique({ where: { id }, select: { id: true, name: true } });
     if (!org) redirect("/admin/organizations");
-    const target = await db.user.findFirst({ where: { organizationId: id, role: "OFFICE_MANAGER", status: "ACTIVE" }, orderBy: { createdAt: "asc" }, select: { id: true, name: true, phone: true } });
+    const target = await db.user.findFirst({ where: { organizationId: id, role: "ACCOUNT_OWNER", status: "ACTIVE" }, orderBy: { createdAt: "asc" }, select: { id: true, name: true, phone: true } });
     if (!target) redirect(`/admin/organizations/${id}?error=nomanager`);
 
     const expiresAt = new Date(Date.now() + durationMinutes * 60_000);
@@ -363,6 +364,24 @@ export async function replyToTicket(formData: FormData) {
       });
     }
     revalidatePath("/admin/support");
+  } catch (e) {
+    await failFromError(e);
+  }
+}
+
+/* ───────────── Test accounts ───────────── */
+
+/** Creates the sandbox office with one fake number per role (lib/test-office.ts). Safe to press twice. */
+export async function prepareTestAccounts(_formData?: FormData) {
+  try {
+    const admin = await requireSuperAdmin();
+    const r = await ensureTestOffice();
+    if (r.created) {
+      const org = await db.organization.findUnique({ where: { slug: "darak-test" }, select: { id: true, name: true } });
+      await audit({ user: admin, organizationId: null, action: "CREATE", entityType: "ORGANIZATION", entityId: org?.id, entityLabel: org?.name ?? "مكتب تجريبي", newValue: { testAccounts: true } });
+    }
+    revalidatePath("/admin");
+    redirect(`/admin?toast=${encodeURIComponent(r.message)}`);
   } catch (e) {
     await failFromError(e);
   }

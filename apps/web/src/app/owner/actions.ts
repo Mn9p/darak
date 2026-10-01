@@ -28,7 +28,8 @@ export async function addStatementComment(_prev: FormState, formData: FormData):
       await audit({ user, action: "CREATE", entityType: "SUPPORT_TICKET", entityId: t.id, entityLabel: t.subject, newValue: { statementId: st.id, comment } });
       await notify({
         organizationId: user.organizationId,
-        roles: ["OFFICE_MANAGER", "ACCOUNTANT"],
+        owners: true,
+        audience: ["statements.manage"],
         title: `ملاحظة من المالك على التسوية ${st.code}`,
         body: comment.slice(0, 160),
         severity: "INFO",

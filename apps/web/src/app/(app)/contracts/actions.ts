@@ -158,7 +158,7 @@ async function activateInternal(user: StaffUser, contractId: string) {
   await refreshInstallments(org, ids);
   await notify({
     organizationId: org,
-    roles: ["ACCOUNTANT", "COLLECTOR"],
+    audience: ["payments.manage", "collections.manage"],
     title: `عقد جديد نشط: ${c.code} — ${c.tenant.name}`,
     body: `الوحدة ${c.unit.number} · ${Math.round(c.totalAmount)} ر.س · ${PAYMENT_FREQUENCY[c.paymentFrequency] ?? c.paymentFrequency}`,
     severity: "SUCCESS",
@@ -224,7 +224,7 @@ export async function createContract(_prev: FormState, formData: FormData): Prom
         await db.unit.updateMany({ where: { id: d.unitId, status: { in: ["VACANT", "AVAILABLE"] } }, data: { status: "RESERVED" } });
         await notify({
           organizationId: org,
-          roles: ["OFFICE_MANAGER"],
+          owners: true,
           title: `عقد بانتظار الاعتماد: ${c.code} — ${tenant.name}`,
           body: `${Math.round(d.totalAmount)} ر.س · أنشأه ${user.name}`,
           severity: "WARNING",
@@ -309,7 +309,7 @@ export async function activateContract(formData: FormData) {
       await db.contract.update({ where: { id }, data: { status: "PENDING_APPROVAL" } });
       await db.unit.updateMany({ where: { id: c.unitId, status: { in: ["VACANT", "AVAILABLE"] } }, data: { status: "RESERVED" } });
       await audit({ user, action: "STATUS_CHANGE", entityType: "CONTRACT", entityId: id, entityLabel: c.code, oldValue: { status: c.status }, newValue: { status: "PENDING_APPROVAL" } });
-      await notify({ organizationId: org, roles: ["OFFICE_MANAGER"], title: `عقد بانتظار الاعتماد: ${c.code} — ${c.tenant.name}`, severity: "WARNING", entityType: "CONTRACT", entityId: id, href: `/contracts/${id}` });
+      await notify({ organizationId: org, owners: true, title: `عقد بانتظار الاعتماد: ${c.code} — ${c.tenant.name}`, severity: "WARNING", entityType: "CONTRACT", entityId: id, href: `/contracts/${id}` });
     }
     revalidatePath(`/contracts/${id}`);
     revalidatePath("/contracts");
@@ -409,7 +409,7 @@ export async function setRenewalStatus(formData: FormData) {
         organizationId: org,
         title: `تجهيز الوحدة للتأجير بعد انتهاء العقد ${c.code}`,
         description: `المستأجر لا يرغب بالتجديد. ينتهي العقد خلال ${daysFromToday(c.endDate)} يومًا.`,
-        role: "LEASING",
+        assignee: "leasing.manage",
         priority: "HIGH",
         dueDate: addDays(c.endDate, -14),
         entityType: "CONTRACT",
@@ -484,7 +484,7 @@ export async function renewContract(_prev: FormState, formData: FormData): Promi
         await audit({ user, action: "STATUS_CHANGE", entityType: "CONTRACT", entityId: old.id, entityLabel: old.code, oldValue: { status: old.status }, newValue: { status: "RENEWED", renewedBy: c.code } });
       } else {
         await db.contract.update({ where: { id: old.id }, data: { renewalStatus: "APPROVED", status: computeContractStatus({ ...old, renewalStatus: "APPROVED" }) } });
-        await notify({ organizationId: org, roles: ["OFFICE_MANAGER"], title: `تجديد بانتظار الاعتماد: ${c.code} — ${old.tenant.name}`, body: `${Math.round(totalAmount)} ر.س · ${months} شهر`, severity: "WARNING", entityType: "CONTRACT", entityId: c.id, href: `/contracts/${c.id}` });
+        await notify({ organizationId: org, owners: true, title: `تجديد بانتظار الاعتماد: ${c.code} — ${old.tenant.name}`, body: `${Math.round(totalAmount)} ر.س · ${months} شهر`, severity: "WARNING", entityType: "CONTRACT", entityId: c.id, href: `/contracts/${c.id}` });
       }
       await db.task.updateMany({ where: { organizationId: org, entityType: "CONTRACT", entityId: old.id, isAutomated: true, status: { notIn: ["COMPLETED", "CANCELLED"] } }, data: { status: "COMPLETED", completedAt: new Date() } });
       revalidatePath("/contracts");
@@ -567,13 +567,13 @@ export async function terminateContract(_prev: FormState, formData: FormData): P
       organizationId: org,
       title: `وحدة شاغرة بعد إنهاء العقد — ${c.unit.number}`,
       description: `أُنهي العقد ${c.code} للمستأجر ${c.tenant.name}. السبب: ${reason}`,
-      role: "LEASING",
+      assignee: "leasing.manage",
       priority: "HIGH",
       entityType: "UNIT",
       entityId: c.unitId,
       entityLabel: c.unit.number,
     });
-    await notify({ organizationId: org, roles: ["OFFICE_MANAGER", "ACCOUNTANT"], title: `تم إنهاء العقد ${c.code} — ${c.tenant.name}`, body: reason, severity: "WARNING", entityType: "CONTRACT", entityId: id, href: `/contracts/${id}` });
+    await notify({ organizationId: org, owners: true, audience: ["statements.manage"], title: `تم إنهاء العقد ${c.code} — ${c.tenant.name}`, body: reason, severity: "WARNING", entityType: "CONTRACT", entityId: id, href: `/contracts/${id}` });
     revalidatePath(`/contracts/${id}`);
     revalidatePath("/contracts");
     redirect(`/contracts/${id}?toast=updated`);

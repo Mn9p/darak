@@ -75,7 +75,7 @@ export function OrgForm({ action, prefill }: { action: (prev: FormState, fd: For
         </FormGrid>
       </Card>
 
-      <Card title="مدير المكتب الأول" subtitle="يُنشأ حساب بدور OFFICE_MANAGER يدخل برقم جواله ويمكنه دعوة بقية الفريق">
+      <Card title="صاحب الحساب" subtitle="يُنشأ حساب صاحب الحساب: يدخل برقم جواله، ويرى كل شيء، ويضيف موظفيه ويحدد صلاحياتهم">
         <FormGrid cols={2}>
           <Field label="الاسم" name="managerName" required>
             <Input name="managerName" required defaultValue={prefill?.managerName ?? ""} />

@@ -8,6 +8,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireStaff, type SessionUser } from "@/lib/auth";
 import { assertCan, contractScope } from "@/lib/permissions";
+import { assignableMember } from "@/lib/team";
 import { audit } from "@/lib/audit";
 import { notify, autoTask } from "@/lib/notify";
 import { sendMessage, type Channel } from "@/lib/channels";
@@ -27,7 +28,7 @@ async function getCase(user: Staff, id: string) {
       installment: {
         include: {
           tenant: { select: { id: true, name: true, phone: true, email: true } },
-          contract: { select: { id: true, code: true, paymentFrequency: true, unit: { select: { number: true } }, property: { select: { name: true } } } },
+          contract: { select: { id: true, code: true, paymentFrequency: true, propertyId: true, unit: { select: { number: true } }, property: { select: { name: true } } } },
         },
       },
     },
@@ -182,7 +183,7 @@ export async function requestExtension(_prev: FormState, fd: FormData): Promise<
     ]);
     await notify({
       organizationId: user.organizationId,
-      roles: ["OFFICE_MANAGER"],
+      owners: true,
       title: `طلب تمديد سداد — ${k.installment.tenant.name}`,
       body: `${k.installment.contract.code} / قسط ${k.installment.seq} · ${reason}`,
       severity: "WARNING",
@@ -200,7 +201,7 @@ export async function requestExtension(_prev: FormState, fd: FormData): Promise<
       newValue: { followUpStatus: "PROMISE_TO_PAY", until, reason },
     });
     revalidatePath(`/collections/${k.id}`);
-    return { success: "تم تسجيل طلب التمديد وإشعار مدير المكتب." };
+    return { success: "تم تسجيل طلب التمديد وإشعار صاحب الحساب." };
   } catch (e) {
     return actionFailure(e);
   }
@@ -256,17 +257,17 @@ export async function escalateCase(_prev: FormState, fd: FormData): Promise<Form
     }
     const now = new Date();
     const remaining = k.installment.amount - k.installment.paidAmount;
-    const note = najiz ? `طلب تنفيذ مالي عبر ناجز — بانتظار موافقة مدير المكتب.${reason ? ` ${reason}` : ""}` : reason || "تصعيد يدوي إلى مدير المكتب.";
+    const note = najiz ? `طلب تنفيذ مالي عبر ناجز — بانتظار موافقة صاحب الحساب.${reason ? ` ${reason}` : ""}` : reason || "تصعيد يدوي إلى صاحب الحساب.";
     await db.$transaction([
       db.collectionAction.create({ data: { caseId: k.id, type: "ESCALATION", note, byUserId: user.id } }),
       db.collectionCase.update({
         where: { id: k.id },
-        data: { followUpStatus: "ESCALATED", escalatedAt: now, lastActionAt: now, nextAction: najiz ? "تقديم طلب التنفيذ عبر ناجز" : "قرار مدير المكتب", nextActionDate: addDays(now, 2) },
+        data: { followUpStatus: "ESCALATED", escalatedAt: now, lastActionAt: now, nextAction: najiz ? "تقديم طلب التنفيذ عبر ناجز" : "قرار صاحب الحساب", nextActionDate: addDays(now, 2) },
       }),
     ]);
     await notify({
       organizationId: user.organizationId,
-      roles: ["OFFICE_MANAGER"],
+      owners: true,
       title: `${najiz ? "طلب تنفيذ عبر ناجز" : "تصعيد مطالبة"} — ${k.installment.tenant.name}`,
       body: `الوحدة ${k.installment.contract.unit.number} · المتبقي ${money(remaining)} ر.س${reason ? ` · ${reason}` : ""}`,
       severity: "DANGER",
@@ -278,7 +279,7 @@ export async function escalateCase(_prev: FormState, fd: FormData): Promise<Form
       organizationId: user.organizationId,
       title: `${najiz ? "طلب تنفيذ عبر ناجز" : "مطالبة مصعّدة"}: ${k.installment.tenant.name} — الوحدة ${k.installment.contract.unit.number}`,
       description: `صعّد ${user.name} المطالبة. المتبقي ${money(remaining)} ر.س.${reason ? ` السبب: ${reason}` : ""}`,
-      role: "OFFICE_MANAGER",
+      assignee: "OWNER",
       priority: "URGENT",
       dueDate: addDays(now, 2),
       entityType: "INSTALLMENT",
@@ -295,7 +296,7 @@ export async function escalateCase(_prev: FormState, fd: FormData): Promise<Form
       newValue: { followUpStatus: "ESCALATED", reason, najiz },
     });
     revalidatePath(`/collections/${k.id}`);
-    return { success: najiz ? "تم تسجيل طلب التنفيذ وإشعار مدير المكتب." : "تم التصعيد وإشعار مدير المكتب." };
+    return { success: najiz ? "تم تسجيل طلب التنفيذ وإشعار صاحب الحساب." : "تم التصعيد وإشعار صاحب الحساب." };
   } catch (e) {
     return actionFailure(e);
   }
@@ -309,10 +310,9 @@ export async function assignCollector(_prev: FormState, fd: FormData): Promise<F
     const collectorId = String(fd.get("collectorId") ?? "");
     const k = await getCase(user, caseId);
     if (!k) return { error: "المطالبة غير موجودة." };
-    const collector = collectorId
-      ? await db.user.findFirst({ where: { id: collectorId, organizationId: user.organizationId, status: "ACTIVE" }, select: { id: true, name: true } })
-      : null;
-    if (collectorId && !collector) return { error: "المحصل غير موجود." };
+    const collector = collectorId ? await assignableMember(user.organizationId, collectorId, "collections.manage") : null;
+    if (collectorId && !collector) return { error: "الموظف المحدد لا يملك صلاحية متابعة المطالبات." };
+    if (collector && !collector.reaches(k.installment.contract.propertyId)) return { error: `${collector.name} لا يملك صلاحية الوصول إلى هذا العقار.` };
     await db.$transaction([
       db.collectionCase.update({ where: { id: k.id }, data: { collectorId: collector?.id ?? null } }),
       db.collectionAction.create({
@@ -400,12 +400,15 @@ export async function bulkAssign(fd: FormData) {
     // Same-module relative paths only (no scheme, no protocol-relative //, no backslash).
     const back = /^\/collections(?:[/?][^\\]*)?$/.test(rawBack) && !rawBack.startsWith("//") ? rawBack : "/collections";
     if (!ids.length || !collectorId) redirect(back);
-    const collector = await db.user.findFirst({ where: { id: collectorId, organizationId: user.organizationId, status: "ACTIVE" }, select: { id: true, name: true } });
-    if (!collector) throw new Error("المحصل غير موجود.");
-    const cases = await db.collectionCase.findMany({
-      where: { id: { in: ids }, organizationId: user.organizationId, installment: { ...contractScope(user) } },
-      select: { id: true, collectorId: true },
-    });
+    const collector = await assignableMember(user.organizationId, collectorId, "collections.manage");
+    if (!collector) throw new Error("الموظف المحدد لا يملك صلاحية متابعة المطالبات.");
+    const cases = (
+      await db.collectionCase.findMany({
+        where: { id: { in: ids }, organizationId: user.organizationId, installment: { ...contractScope(user) } },
+        select: { id: true, collectorId: true, installment: { select: { contract: { select: { propertyId: true } } } } },
+      })
+    ).filter((c) => collector.reaches(c.installment.contract.propertyId));
+    if (ids.length && !cases.length) throw new Error(`${collector.name} لا يملك صلاحية الوصول إلى عقارات هذه المطالبات.`);
     if (cases.length) {
       await db.$transaction([
         db.collectionCase.updateMany({ where: { id: { in: cases.map((c) => c.id) } }, data: { collectorId: collector.id } }),
@@ -414,7 +417,7 @@ export async function bulkAssign(fd: FormData) {
       if (collector.id !== user.id) {
         await notify({ organizationId: user.organizationId, userIds: [collector.id], title: `تم إسناد ${cases.length} مطالبة إليك`, entityType: "COLLECTION", href: "/collections?view=list&mine=1" });
       }
-      await audit({ user, action: "UPDATE", entityType: "COLLECTION", entityLabel: `إسناد جماعي (${cases.length})`, oldValue: cases, newValue: { collectorId: collector.id, ids: cases.map((c) => c.id) } });
+      await audit({ user, action: "UPDATE", entityType: "COLLECTION", entityLabel: `إسناد جماعي (${cases.length})`, oldValue: cases.map((c) => ({ id: c.id, collectorId: c.collectorId })), newValue: { collectorId: collector.id, ids: cases.map((c) => c.id) } });
     }
     revalidatePath("/collections");
     redirect(back);

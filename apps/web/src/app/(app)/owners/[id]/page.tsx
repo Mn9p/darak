@@ -146,7 +146,7 @@ export default async function OwnerPage({ params, searchParams }: { params: Prom
               ) : (
                 <div className="space-y-1">
                   {current.map((x) => (
-                    <div key={x.id} className="flex items-center justify-between gap-3 border-b border-[#EDF1EF] py-2 last:border-0">
+                    <div key={x.id} className="flex items-center justify-between gap-3 border-b border-line-soft py-2 last:border-0">
                       <div className="min-w-0">
                         <Link href={`/properties/${x.property.id}`} className="font-bold hover:text-brand">
                           {x.property.name}

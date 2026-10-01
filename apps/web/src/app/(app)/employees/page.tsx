@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { assertCan, can } from "@/lib/permissions";
+import { assertCan, can, matchPreset, normalizePermissions } from "@/lib/permissions";
 import { ROLES, STAFF_ROLES, USER_STATUS } from "@/lib/constants";
 import { money, relative, pageParam } from "@/lib/format";
 import { PageHeader, Card, Table, StatusTag, EmptyState, Pagination, FilterBar, Input, Select, StatGrid, StatCard, Avatar, Tag } from "@/components/ui";
@@ -13,6 +13,19 @@ import { textLike, phoneLike } from "@/lib/search";
 export const dynamic = "force-dynamic";
 const PAGE = 25;
 const ROLE_OPTIONS = STAFF_ROLES.map((r) => ({ value: r, label: ROLES[r].label }));
+
+/** "كل الصلاحيات" for owners, the preset name when the grant matches one, otherwise a count. */
+function accessLabel(role: string, stored: string, allProperties: boolean) {
+  if (role !== "EMPLOYEE") return <span className="font-semibold text-text">كل الصلاحيات</span>;
+  const perms = normalizePermissions(stored);
+  const preset = matchPreset(perms, allProperties);
+  if (preset) return <span>{preset.label}</span>;
+  return (
+    <span>
+      مخصصة · <span className="num">{perms.length - 1}</span>
+    </span>
+  );
+}
 
 export default async function EmployeesPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireStaff();
@@ -55,11 +68,12 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader
-        title="الموظفون"
+        title="فريق العمل"
+        subtitle="صاحب الحساب يرى كل شيء. كل موظف يرى ما تمنحه له فقط."
         actions={
           can(user, "employees.manage") ? (
             <Link href="/employees/new" className="btn btn-primary btn-sm">
-              إضافة موظف
+              إضافة عضو
             </Link>
           ) : undefined
         }
@@ -68,18 +82,18 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
       <GuideCard
         id="employees"
         show={statTotal <= 1 && !hasFilters}
-        title="الموظفون: من يعمل في المكتب وما يراه كل منهم"
+        title="فريق العمل: من يعمل معك وما يراه كل منهم"
         steps={[
-          "أضف الموظف برقم جواله؛ يدخل برمز يصله برسالة نصية دون كلمة مرور.",
-          "اختر دوره: مدير عقار يرى عقاراته فقط، محصل، محاسب، أو مدقق للقراءة فقط.",
-          "لمدير العقار أسند العقارات التي يتابعها.",
+          "أضف العضو برقم جواله؛ يدخل برمز يصله برسالة نصية دون كلمة مرور.",
+          "اختر الدور: صاحب حساب (كل شيء) أو موظف.",
+          "للموظف اختر قالبًا جاهزًا (تحصيل، تأجير، محاسبة…) أو حدد صلاحياته بنفسك، وكل العقارات أو عقارات محددة.",
         ]}
-        cta={{ href: "/employees/new", label: "إضافة موظف" }}
+        cta={{ href: "/employees/new", label: "إضافة عضو" }}
         secondary={{ href: "/settings", label: "إعدادات المكتب" }}
       />
 
       <StatGrid cols={4}>
-        <StatCard label="الموظفون" value={money(statTotal)} sub={limit ? `الحد في الباقة: ${limit}` : undefined} tone={limit && statTotal >= limit ? "warning" : undefined} />
+        <StatCard label="أعضاء الفريق" value={money(statTotal)} sub={limit ? `الحد في الباقة: ${limit}` : undefined} tone={limit && statTotal >= limit ? "warning" : undefined} />
         <StatCard label="نشطون" value={money(statActive)} tone="success" href="/employees?status=ACTIVE" />
         <StatCard label="غير نشطين أو مدعوون" value={money(statTotal - statActive)} tone={statTotal - statActive > 0 ? "warning" : undefined} />
         <StatCard label="لم يسجلوا دخولًا" value={money(statNeverLoggedIn)} />
@@ -99,20 +113,19 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
         </div>
         {rows.length === 0 ? (
           <EmptyState
-            title={hasFilters ? "لا توجد نتائج مطابقة" : "لا يوجد موظفون بعد"}
-            description={hasFilters ? "جرّب تعديل الفلاتر." : "أضف أعضاء فريقك وحدد أدوارهم."}
-            action={!hasFilters && can(user, "employees.manage") ? <Link href="/employees/new" className="btn btn-primary">إضافة موظف</Link> : undefined}
+            title={hasFilters ? "لا توجد نتائج مطابقة" : "لا يوجد أعضاء بعد"}
+            description={hasFilters ? "جرّب تعديل الفلاتر." : "أضف أعضاء فريقك وحدد صلاحياتهم."}
+            action={!hasFilters && can(user, "employees.manage") ? <Link href="/employees/new" className="btn btn-primary">إضافة عضو</Link> : undefined}
           />
         ) : (
           <Table>
             <thead>
               <tr>
-                <th>الموظف</th>
+                <th>العضو</th>
                 <th>الدور</th>
-                <th>القسم / المسمى</th>
+                <th>الصلاحيات</th>
+                <th>العقارات</th>
                 <th>الفرع</th>
-                <th>المدير المباشر</th>
-                <th className="num">العقارات المسندة</th>
                 <th>الحالة</th>
               </tr>
             </thead>
@@ -133,22 +146,31 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
                         )}
                         <div className="cell-sub">
                           <span className="num">{displayPhone(e.phone)}</span>
-                          {e.email && <span className="latin"> · {e.email}</span>}
-                          {e.employeeCode && <span className="latin"> · {e.employeeCode}</span>}
+                          {e.email && (
+                            <>
+                              {" · "}
+                              <span className="latin">{e.email}</span>
+                            </>
+                          )}
                         </div>
                       </span>
                     </span>
                   </td>
                   <td>
                     <StatusTag value={e.role} map={ROLES} />
-                  </td>
-                  <td>
-                    {e.department ?? <span className="text-faint">—</span>}
                     {e.jobTitle && <div className="cell-sub">{e.jobTitle}</div>}
                   </td>
+                  <td>{accessLabel(e.role, e.permissions, e.allProperties)}</td>
+                  <td>
+                    {e.role !== "EMPLOYEE" || e.allProperties ? (
+                      <span className="text-muted">كل العقارات</span>
+                    ) : (
+                      <span>
+                        <span className="num">{e._count.assignments}</span> عقار
+                      </span>
+                    )}
+                  </td>
                   <td className="text-muted">{e.branch?.name ?? "—"}</td>
-                  <td>{e.manager ? <Link href={`/employees/${e.manager.id}`} className="hover:text-brand">{e.manager.name}</Link> : <span className="text-faint">—</span>}</td>
-                  <td className="num">{e.role === "PROPERTY_MANAGER" && e._count.assignments === 0 ? <span className="text-muted">الكل</span> : e._count.assignments}</td>
                   <td>
                     <StatusTag value={e.status} map={USER_STATUS} />
                     <div className="cell-sub">{e.lastLoginAt ? `آخر دخول ${relative(e.lastLoginAt)}` : "لم يسجل دخولًا"}</div>

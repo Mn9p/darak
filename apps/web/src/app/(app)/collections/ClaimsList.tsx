@@ -10,6 +10,7 @@ import { MoreFilters } from "@/components/MoreFilters";
 import { bulkAssign, saveView, deleteView } from "./actions";
 import { displayPhone } from "@/lib/phone";
 import { textLike, phoneLike } from "@/lib/search";
+import { teamWith } from "@/lib/team";
 
 const PAGE = 25;
 
@@ -54,7 +55,7 @@ export async function ClaimsList({ user, sp }: { user: SessionUser & { organizat
         actions: { orderBy: { createdAt: "desc" }, take: 1 },
       },
     }),
-    db.user.findMany({ where: { organizationId: org, role: { in: ["COLLECTOR", "OFFICE_MANAGER"] }, status: "ACTIVE" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    teamWith(org, "collections.manage"),
     db.property.findMany({ where: { organizationId: org, status: { not: "ARCHIVED" }, ...(isScoped(user) ? { id: { in: user.assignedPropertyIds } } : {}) }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     db.savedView.findMany({ where: { organizationId: org, module: "collections", OR: [{ userId: user.id }, { isShared: true }] }, orderBy: { createdAt: "asc" } }),
     db.collectionCase.findMany({

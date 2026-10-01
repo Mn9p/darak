@@ -9,6 +9,7 @@ import { GuideCard } from "@/components/GuideCard";
 import { MoreFilters } from "@/components/MoreFilters";
 import { displayPhone } from "@/lib/phone";
 import { textLike, phoneLike } from "@/lib/search";
+import { teamWith } from "@/lib/team";
 
 export const dynamic = "force-dynamic";
 const PAGE = 25;
@@ -45,7 +46,7 @@ export default async function LeasingPage({ searchParams }: { searchParams: Prom
     view === "list"
       ? db.lead.findMany({ where, orderBy: { updatedAt: "desc" }, skip: (page - 1) * PAGE, take: PAGE, include })
       : db.lead.findMany({ where: { ...where, ...(sp.stage ? {} : { stage: { not: "LOST" } }) }, orderBy: { updatedAt: "desc" }, take: 400, include }),
-    db.user.findMany({ where: { organizationId: org, role: { in: ["OFFICE_MANAGER", "PROPERTY_MANAGER", "LEASING"] }, status: "ACTIVE" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    teamWith(org, "leasing.manage"),
     db.unit.findMany({ where: { organizationId: org, status: { not: "ARCHIVED" }, ...propertyIdScope(user) }, select: { id: true, number: true, property: { select: { name: true } } }, orderBy: { number: "asc" }, take: 300 }),
     db.unit.findMany({
       where: { organizationId: org, status: { in: ["VACANT", "AVAILABLE"] }, ...propertyIdScope(user) },

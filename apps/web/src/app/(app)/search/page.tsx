@@ -396,7 +396,7 @@ function Group({ id, title, count, more, children }: { id: string; title: string
   return (
     <div id={id}>
       <Card title={title} subtitle={`${count} نتيجة`} actions={count >= LIMIT ? <Link href={more} className="link text-xs">عرض الكل</Link> : undefined} padded={false}>
-        <ul className="divide-y divide-[#EDF1EF]">{children}</ul>
+        <ul className="divide-y divide-line-soft">{children}</ul>
       </Card>
     </div>
   );

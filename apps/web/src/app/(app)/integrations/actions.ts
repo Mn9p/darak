@@ -109,7 +109,7 @@ export async function syncIntegration(formData: FormData) {
       const lastError = missing.length ? `إعدادات ناقصة: ${missing.map((f) => f.label).join("، ")}. أكمل الإعدادات ثم أعد المحاولة.` : "التكامل غير متصل. اربط الحساب أولًا.";
       await db.integration.update({ where: { id }, data: { status: "ERROR", lastError } });
       await log(id, "ERROR", lastError);
-      await notify({ organizationId: org, roles: ["OFFICE_MANAGER"], title: `فشل المزامنة: ${row.name}`, body: lastError, severity: "DANGER", entityType: "INTEGRATION", entityId: id, href: "/integrations" });
+      await notify({ organizationId: org, owners: true, title: `فشل المزامنة: ${row.name}`, body: lastError, severity: "DANGER", entityType: "INTEGRATION", entityId: id, href: "/integrations" });
       await audit({ user, action: "SYNC", entityType: "INTEGRATION", entityId: id, entityLabel: row.name, newValue: { result: "ERROR", lastError } });
       revalidatePath("/integrations");
       return;
@@ -146,7 +146,7 @@ export async function syncIntegration(formData: FormData) {
       const lastError = (e as Error).message?.slice(0, 200) || "خطأ غير متوقع أثناء المزامنة";
       await db.integration.update({ where: { id }, data: { status: "ERROR", lastError } });
       await log(id, "ERROR", lastError);
-      await notify({ organizationId: org, roles: ["OFFICE_MANAGER"], title: `فشل المزامنة: ${row.name}`, body: lastError, severity: "DANGER", entityType: "INTEGRATION", entityId: id, href: "/integrations" });
+      await notify({ organizationId: org, owners: true, title: `فشل المزامنة: ${row.name}`, body: lastError, severity: "DANGER", entityType: "INTEGRATION", entityId: id, href: "/integrations" });
       await audit({ user, action: "SYNC", entityType: "INTEGRATION", entityId: id, entityLabel: row.name, newValue: { result: "ERROR", lastError } });
     }
     revalidatePath("/integrations");

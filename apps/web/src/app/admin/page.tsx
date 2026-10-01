@@ -3,11 +3,16 @@ import { requireSuperAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { money, num, date, relative, datetime, pct } from "@/lib/format";
 import { PLANS, ORG_STATUS, INTEGRATION_PROVIDERS, TICKET_PRIORITY } from "@/lib/constants";
-import { StatCard, StatGrid, Card, StatusTag, Table, EmptyState, Tag, Progress } from "@/components/ui";
+import { StatCard, StatGrid, Card, StatusTag, Table, EmptyState, Tag, Progress, ActionButton } from "@/components/ui";
 import { LogoMark } from "@/components/Logo";
 import { dbPing } from "./_shared";
+import { prepareTestAccounts } from "./actions";
+import { TEST_ACCOUNTS, availableTestAccounts, testAccountsEnabled } from "@/lib/test-accounts";
+import { displayPhone } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
+// "تجهيز الحسابات التجريبية" builds a whole sandbox office in one action; give it more than the default serverless time.
+export const maxDuration = 60;
 
 export default async function AdminOverview() {
   const user = await requireSuperAdmin();
@@ -155,7 +160,45 @@ export default async function AdminOverview() {
           )}
         </Card>
       </div>
+
+      <TestAccountsCard />
     </>
+  );
+}
+
+/** One fake number per role for demos and testing: the code shows on the login screen, no SMS is sent. */
+async function TestAccountsCard() {
+  if (!testAccountsEnabled()) return null;
+  const ready = await availableTestAccounts();
+  const have = new Set(ready.map((a) => a.phone));
+  return (
+    <Card
+      className="mt-4"
+      title="الحسابات التجريبية"
+      subtitle="رقم وهمي لكل دور داخل مكتب تجريبي منفصل. رمز الدخول يظهر على الشاشة ولا تُرسل رسالة. أوقفها عند الإطلاق بـ TEST_ACCOUNTS=off."
+      actions={
+        ready.length < TEST_ACCOUNTS.length ? (
+          <ActionButton action={prepareTestAccounts} className="btn btn-primary btn-sm">
+            تجهيز الحسابات التجريبية
+          </ActionButton>
+        ) : undefined
+      }
+    >
+      <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {TEST_ACCOUNTS.map((a) => (
+          <li key={a.phone} className="rounded-xl border border-line px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <b className="num text-[15px]">{displayPhone(a.phone)}</b>
+              <Tag tone={have.has(a.phone) ? "success" : "neutral"} plain>
+                {have.has(a.phone) ? "جاهز" : "غير موجود"}
+              </Tag>
+            </div>
+            <div className="mt-1 text-[13px] font-bold text-ink">{a.label}</div>
+            <div className="text-[12px] text-muted">{a.hint}</div>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 

@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { db } from "./db";
 import { authSecret } from "./secrets";
 import type { Role } from "./constants";
-import { can } from "./permissions";
+import { can, normalizePermissions, type Permission } from "./permissions";
 import { routePermission } from "./nav";
+import { isTestPhone } from "./test-accounts";
 import { cache } from "react";
 
 const COOKIE = "darak_session";
@@ -25,6 +26,10 @@ export interface SessionUser {
   ownerId: string | null;
   tenantId: string | null;
   assignedPropertyIds: string[];
+  /** EMPLOYEE: the permissions an account owner granted (normalized). Empty for every other role — see can(). */
+  permissions: Permission[];
+  /** EMPLOYEE: false = limited to assignedPropertyIds. Always true for other roles. */
+  allProperties: boolean;
   /** Platform support impersonation flag — logged in Audit Log */
   supportAccess?: boolean;
   /** Platform admin acting through this support session (Session.supportAdminId); null for normal sessions. */
@@ -106,7 +111,7 @@ export function loginAllowedPhones(): string[] | null {
 /** True when the (normalized 9665…) number may sign in under the current allowlist. */
 export function loginAllowed(phone: string): boolean {
   const list = loginAllowedPhones();
-  return !list || list.includes(phone);
+  return !list || list.includes(phone) || isTestPhone(phone);
 }
 
 type Denied = "TRIAL_EXPIRED" | null;
@@ -147,6 +152,8 @@ const resolveSession = cache(async (): Promise<{ user: SessionUser | null; denie
         ownerId: user.ownerId,
         tenantId: user.tenantId,
         assignedPropertyIds: user.assignments.map((a) => a.propertyId),
+        permissions: user.role === "EMPLOYEE" ? normalizePermissions(user.permissions) : [],
+        allProperties: user.role !== "EMPLOYEE" || user.allProperties,
         supportAccess,
         supportAdminId,
         supportAdminName: admin?.name ?? null,
@@ -183,9 +190,10 @@ export async function requireStaff(): Promise<SessionUser & { organizationId: st
   return user as SessionUser & { organizationId: string };
 }
 
-export async function requireRole(roles: Role[]): Promise<SessionUser & { organizationId: string }> {
+/** Staff page that needs a specific permission beyond the module view (e.g. a /new or /edit form). */
+export async function requirePermission(permission: Permission): Promise<SessionUser & { organizationId: string }> {
   const user = await requireStaff();
-  if (!roles.includes(user.role) && user.role !== "SUPER_ADMIN") redirect("/forbidden");
+  if (!can(user, permission)) redirect("/forbidden");
   return user;
 }
 

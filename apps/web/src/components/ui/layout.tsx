@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { LogoMark } from "../Logo";
 import { Icon } from "../icons";
+import { TabsScroll } from "./TabsScroll";
 
 export type Crumb = { label: string; href?: string };
 
@@ -44,12 +45,12 @@ export function PageHeader({
   breadcrumbs?: Crumb[];
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-x-3 gap-y-3">
       <div className="min-w-0">
         {breadcrumbs && <Breadcrumbs items={breadcrumbs} className="mb-1.5" />}
         {eyebrow && <div className="eyebrow-ar mb-1">{eyebrow}</div>}
-        <h1 className="text-[22px] font-bold leading-tight text-ink md:text-[24px]">{title}</h1>
-        {subtitle && <p className="mt-1 text-[13.5px] text-muted">{subtitle}</p>}
+        <h1 className="text-[22px] font-bold leading-snug text-ink md:text-[24px]">{title}</h1>
+        {subtitle && <p className="mt-1 text-[14px] text-muted">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -144,15 +145,15 @@ export function Card({
   return (
     <section className={`${base} ${hover ? "card-hover" : ""} ${className}`}>
       {(title || actions) && (
-        <header className="flex flex-wrap items-center justify-between gap-2 px-5 pb-2 pt-4">
+        <header className="flex flex-wrap items-center justify-between gap-2 px-4 pb-2 pt-4 md:px-5">
           <div className="min-w-0">
-            {title && <h3 className={`text-[15px] font-bold ${tone === "dark" ? "text-sand-200" : "text-brand"}`}>{title}</h3>}
-            {subtitle && <p className={`text-xs ${tone === "dark" ? "text-on-dark-2" : "text-muted"}`}>{subtitle}</p>}
+            {title && <h3 className={`text-[16px] font-bold ${tone === "dark" ? "text-sand-200" : "text-ink"}`}>{title}</h3>}
+            {subtitle && <p className={`text-[12.5px] ${tone === "dark" ? "text-on-dark-2" : "text-muted"}`}>{subtitle}</p>}
           </div>
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </header>
       )}
-      <div className={padded ? `px-5 pb-5 ${title || actions ? "pt-1" : "pt-5"}` : ""}>{children}</div>
+      <div className={padded ? `px-4 pb-4 md:px-5 md:pb-5 ${title || actions ? "pt-1" : "pt-4 md:pt-5"}` : ""}>{children}</div>
     </section>
   );
 }
@@ -170,9 +171,9 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-      <div className="mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-mist">{icon && typeof icon !== "string" ? icon : <LogoMark size={30} className="opacity-40" />}</div>
-      <h3 className="text-[15px] font-bold text-text">{title}</h3>
-      {description && <p className="mt-1 max-w-sm text-[13px] text-muted">{description}</p>}
+      <div className="mb-3 grid h-16 w-16 place-items-center rounded-[20px] bg-brand-100">{icon && typeof icon !== "string" ? icon : <LogoMark size={32} className="opacity-50" />}</div>
+      <h3 className="text-[16px] font-bold text-text">{title}</h3>
+      {description && <p className="mt-1 max-w-sm text-[14px] text-muted">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -208,6 +209,7 @@ export function Tabs({ tabs, active, base, sticky }: { tabs: { key: string; labe
           {t.count !== undefined && <span className="num mr-1.5 text-[11px] text-faint">({t.count})</span>}
         </Link>
       ))}
+      <TabsScroll />
     </div>
   );
 }

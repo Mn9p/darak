@@ -198,7 +198,7 @@ export default async function UnitPage({ params, searchParams }: { params: Promi
                 <p className="text-[13px] text-muted">لم يُسجَّل مالك لهذا العقار.</p>
               ) : (
                 u.property.ownerships.map((o) => (
-                  <div key={o.id} className="flex items-center justify-between border-b border-[#EDF1EF] py-2 last:border-0">
+                  <div key={o.id} className="flex items-center justify-between border-b border-line-soft py-2 last:border-0">
                     <Link href={`/owners/${o.owner.id}`} className="font-bold hover:text-brand">
                       {o.owner.name}
                     </Link>

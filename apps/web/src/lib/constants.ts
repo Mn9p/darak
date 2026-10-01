@@ -10,26 +10,23 @@ export interface StatusMeta {
 
 export const ROLES = {
   SUPER_ADMIN: { label: "مدير المنصة", tone: "brand" },
-  OFFICE_MANAGER: { label: "مدير المكتب", tone: "brand" },
-  PROPERTY_MANAGER: { label: "مدير عقار", tone: "info" },
-  LEASING: { label: "موظف تأجير", tone: "info" },
-  COLLECTOR: { label: "محصل", tone: "warning" },
-  ACCOUNTANT: { label: "محاسب", tone: "info" },
-  OWNER: { label: "مالك", tone: "success" },
+  ACCOUNT_OWNER: { label: "صاحب الحساب", tone: "brand" },
+  EMPLOYEE: { label: "موظف", tone: "info" },
+  OWNER: { label: "مالك عقار", tone: "success" },
   TENANT: { label: "مستأجر", tone: "neutral" },
-  AUDITOR: { label: "مدقق (قراءة فقط)", tone: "neutral" },
 } as const satisfies Record<string, StatusMeta>;
 
 export type Role = keyof typeof ROLES;
 
-export const STAFF_ROLES: Role[] = [
-  "OFFICE_MANAGER",
-  "PROPERTY_MANAGER",
-  "LEASING",
-  "COLLECTOR",
-  "ACCOUNTANT",
-  "AUDITOR",
-];
+/** The office team: the account owner(s) and employees. Portal users (OWNER, TENANT) are not team members. */
+export const STAFF_ROLES: Role[] = ["ACCOUNT_OWNER", "EMPLOYEE"];
+
+/** Who a notification rule addresses (NotificationRule.targetRoles, comma separated). */
+export const RULE_AUDIENCES: Record<string, string> = {
+  ACCOUNT_OWNER: "صاحب الحساب",
+  EMPLOYEE: "الموظفون المعنيون",
+  TENANT: "المستأجر",
+};
 
 export const PROPERTY_TYPES: Record<string, string> = {
   RESIDENTIAL_BUILDING: "عمارة سكنية",

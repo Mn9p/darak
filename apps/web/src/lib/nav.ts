@@ -7,49 +7,65 @@ export interface NavItem {
   permission?: Permission;
   countKey?: string;
   icon?: IconName;
+  /** Short label for the narrow rail and the bottom bar (falls back to label). */
+  short?: string;
+  /** Candidate for the phone bottom bar (first four permitted ones, in order). */
+  bottom?: boolean;
 }
 
 export interface NavSection {
   title: string;
   items: NavItem[];
-  /** Collapsed by default under "المزيد" to keep the daily menu short. */
-  secondary?: boolean;
+  /** Daily sections: shown in the desktop dock (the full menu panel always lists every group). */
+  dock?: boolean;
 }
 
-// Daily work first (short), everything else under "المزيد". Property-first: units, owners and tenants are reached from the property.
+// Grouped the way an office works. Every item carries its permission: the sidebar, the phone menu and the route guard
+// all read this list, so an employee sees exactly the sections the account owner granted — nothing else.
 export const NAV: NavSection[] = [
   {
     title: "",
-    items: [{ href: "/dashboard", label: "الرئيسية", permission: "dashboard.view", icon: "home" }],
+    dock: true,
+    items: [{ href: "/dashboard", label: "الرئيسية", permission: "dashboard.view", icon: "home", bottom: true }],
   },
   {
     title: "العمل اليومي",
+    dock: true,
     items: [
-      { href: "/properties", label: "العقارات", permission: "properties.view", icon: "building" },
+      { href: "/properties", label: "العقارات", permission: "properties.view", icon: "building", bottom: true },
       { href: "/contracts", label: "العقود", permission: "contracts.view", countKey: "expiring", icon: "file" },
-      { href: "/collections", label: "التحصيل", permission: "collections.view", countKey: "overdue", icon: "coins" },
-      { href: "/payments", label: "سندات القبض", permission: "payments.view", icon: "wallet" },
+      { href: "/collections", label: "التحصيل", permission: "collections.view", countKey: "overdue", icon: "coins", bottom: true },
+      { href: "/payments", label: "سندات القبض", short: "السندات", permission: "payments.view", icon: "wallet", bottom: true },
       { href: "/expenses", label: "المصروفات", permission: "expenses.view", countKey: "pendingExpenses", icon: "receipt" },
-      { href: "/statements", label: "كشوف حساب الملاك", permission: "statements.view", icon: "bank" },
-      { href: "/tasks", label: "المهام", permission: "tasks.view", countKey: "tasks", icon: "tasks" },
+      { href: "/tasks", label: "المهام", permission: "tasks.view", countKey: "tasks", icon: "tasks", bottom: true },
     ],
   },
   {
-    title: "المزيد",
-    secondary: true,
+    title: "المالية",
+    items: [
+      { href: "/statements", label: "كشوف حساب الملاك", short: "كشوف الملاك", permission: "statements.view", icon: "bank" },
+      { href: "/installments", label: "جدول الدفعات", short: "الدفعات", permission: "installments.view", icon: "clock" },
+      { href: "/reconciliation", label: "المطابقة البنكية", short: "المطابقة", permission: "payments.approve", icon: "check" },
+      { href: "/reports", label: "التقارير", permission: "reports.view", icon: "chart" },
+    ],
+  },
+  {
+    title: "السجلات",
     items: [
       { href: "/units", label: "الوحدات", permission: "units.view", icon: "door" },
       { href: "/owners", label: "الملاك", permission: "owners.view", icon: "key" },
       { href: "/tenants", label: "المستأجرون", permission: "tenants.view", icon: "users" },
-      { href: "/leasing", label: "طلبات التأجير", permission: "leasing.view", icon: "handshake" },
-      { href: "/installments", label: "جدول الدفعات", permission: "installments.view", icon: "clock" },
-      { href: "/reports", label: "التقارير", permission: "reports.view", icon: "chart" },
+      { href: "/leasing", label: "طلبات التأجير", short: "التأجير", permission: "leasing.view", icon: "handshake" },
       { href: "/documents", label: "المستندات", permission: "documents.view", icon: "folder" },
-      { href: "/reconciliation", label: "المطابقة البنكية", permission: "payments.approve", icon: "bank" },
-      { href: "/employees", label: "الموظفون", permission: "employees.view", icon: "user" },
+    ],
+  },
+  {
+    title: "الإدارة",
+    items: [
+      { href: "/employees", label: "فريق العمل", permission: "employees.view", icon: "shield" },
       { href: "/notifications", label: "الإشعارات", countKey: "notifications", icon: "bell" },
       { href: "/audit", label: "سجل العمليات", permission: "audit.view", icon: "clock" },
-      { href: "/import", label: "الاستيراد من Excel", permission: "import.manage", icon: "upload" },
+      { href: "/import", label: "الاستيراد من Excel", short: "الاستيراد", permission: "import.manage", icon: "upload" },
       { href: "/integrations", label: "التكاملات", permission: "integrations.manage", icon: "plug" },
       { href: "/settings", label: "الإعدادات", permission: "settings.manage", icon: "settings" },
       { href: "/help", label: "المساعدة", icon: "help" },
@@ -58,12 +74,12 @@ export const NAV: NavSection[] = [
 ];
 
 export const OWNER_NAV: NavItem[] = [
-  { href: "/owner", label: "الرئيسية", icon: "home" },
-  { href: "/owner/properties", label: "عقاراتي", icon: "building" },
+  { href: "/owner", label: "الرئيسية", icon: "home", bottom: true },
+  { href: "/owner/properties", label: "عقاراتي", icon: "building", bottom: true },
   { href: "/owner/contracts", label: "العقود", icon: "file" },
-  { href: "/owner/collections", label: "التحصيل والمتأخرات", icon: "coins" },
+  { href: "/owner/collections", label: "التحصيل والمتأخرات", short: "التحصيل", icon: "coins", bottom: true },
   { href: "/owner/expenses", label: "المصروفات", icon: "receipt" },
-  { href: "/owner/statements", label: "كشوف الحساب", icon: "bank" },
+  { href: "/owner/statements", label: "كشوف الحساب", short: "الكشوف", icon: "bank", bottom: true },
   { href: "/owner/documents", label: "المستندات", icon: "folder" },
 ];
 
@@ -76,13 +92,13 @@ export const TENANT_NAV: NavItem[] = [
 ];
 
 export const ADMIN_NAV: NavItem[] = [
-  { href: "/admin", label: "نظرة عامة", icon: "home" },
-  { href: "/admin/organizations", label: "العملاء", icon: "building" },
-  { href: "/admin/requests", label: "طلبات الحسابات", icon: "handshake", countKey: "requests" },
-  { href: "/admin/subscriptions", label: "الاشتراكات والخطط", icon: "coins" },
-  { href: "/admin/health", label: "حالة الخدمات", icon: "plug" },
-  { href: "/admin/support", label: "الدعم الفني", icon: "help" },
-  { href: "/admin/audit", label: "سجل المنصة", icon: "clock" },
+  { href: "/admin", label: "نظرة عامة", short: "الرئيسية", icon: "home", bottom: true },
+  { href: "/admin/organizations", label: "العملاء", icon: "building", bottom: true },
+  { href: "/admin/requests", label: "طلبات الحسابات", short: "الطلبات", icon: "handshake", countKey: "requests", bottom: true },
+  { href: "/admin/subscriptions", label: "الاشتراكات والخطط", short: "الاشتراكات", icon: "coins" },
+  { href: "/admin/health", label: "حالة الخدمات", short: "الخدمات", icon: "plug" },
+  { href: "/admin/support", label: "الدعم الفني", short: "الدعم", icon: "help", bottom: true },
+  { href: "/admin/audit", label: "سجل المنصة", short: "السجل", icon: "clock" },
 ];
 
 /** Paths every staff member may open even though their module (first segment) needs a permission: own profile and sessions. */

@@ -163,7 +163,7 @@ export default async function ContractPage({ params, searchParams }: { params: P
             )}
             {c.status === "PENDING_APPROVAL" && (
               <Alert tone="warning" title="بانتظار الاعتماد">
-                أنشأه {c.createdBy?.name ?? "—"} في {datetime(c.createdAt)}. {approve ? "يمكنك اعتماده أو إعادته كمسودة." : "سيقوم مدير المكتب بمراجعته."}
+                أنشأه {c.createdBy?.name ?? "—"} في {datetime(c.createdAt)}. {approve ? "يمكنك اعتماده أو إعادته كمسودة." : "سيقوم صاحب الحساب بمراجعته."}
               </Alert>
             )}
             {c.status === "TERMINATED" && (
@@ -210,7 +210,7 @@ export default async function ContractPage({ params, searchParams }: { params: P
           <div className="space-y-4">
             <Card title="الأقساط القادمة" actions={c.installments.length ? <Link href={`/contracts/${c.id}?tab=installments`} className="link text-xs">كل الأقساط</Link> : undefined}>
               {schedule.filter((i) => !["PAID", "WAIVED"].includes(i.status)).slice(0, 4).map((i) => (
-                <div key={i.id} className="flex items-center justify-between border-b border-[#EDF1EF] py-2 text-[13px] last:border-0">
+                <div key={i.id} className="flex items-center justify-between border-b border-line-soft py-2 text-[13px] last:border-0">
                   <span>
                     <span className="num">#{i.seq}</span> · {date(i.dueDate)}
                   </span>
@@ -226,10 +226,10 @@ export default async function ContractPage({ params, searchParams }: { params: P
               <KV k="إجمالي المستحق" v={<span className="num">{money(totalDue)}</span>} />
               <KV k="المحصل" v={<span className="num">{money(paid)}</span>} />
               <KV k="المتبقي" v={<b className="num text-xl text-sand-200">{money(remaining)}</b>} />
-              <KV k="المتأخر" v={<span className={`num ${overdueAmt > 0 ? "text-[#F3B8B8]" : ""}`}>{money(overdueAmt)}</span>} />
+              <KV k="المتأخر" v={<span className={`num ${overdueAmt > 0 ? "text-[#FF9E97]" : ""}`}>{money(overdueAmt)}</span>} />
               <div className="mt-3">
                 <Progress value={progress} tone="sand" />
-                <div className="mt-1 text-[11.5px] text-[#BCCBC5]">نسبة التحصيل {pct(progress)}</div>
+                <div className="mt-1 text-[11.5px] text-on-dark-2">نسبة التحصيل {pct(progress)}</div>
               </div>
             </Card>
             {c.status === "PENDING_APPROVAL" && approve && manage && (

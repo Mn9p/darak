@@ -360,7 +360,8 @@ export async function markReturnedCheque(fd: FormData) {
     }
     await notify({
       organizationId: user.organizationId,
-      roles: ["OFFICE_MANAGER", "COLLECTOR"],
+      owners: true,
+      audience: ["collections.manage"],
       title: `شيك مرتجع — ${p.tenant.name}`,
       body: `الدفعة ${p.code} بقيمة ${money(p.amount)} ر.س`,
       severity: "DANGER",
@@ -392,7 +393,7 @@ async function refreshAfterReversal(user: Staff, code: string, installmentIds: s
   }
   await notify({
     organizationId: user.organizationId,
-    roles: ["OFFICE_MANAGER"],
+    owners: true,
     title: `تعذر تحديث الأقساط بعد عكس السند ${code}`,
     body: "افتح السند وأعد المحاولة، أو تواصل مع فريق دارك.",
     severity: "DANGER",

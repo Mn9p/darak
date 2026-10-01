@@ -1,18 +1,19 @@
-import { requireRole } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/ui";
 import { PropertyForm } from "../PropertyForm";
 import { createProperty } from "../actions";
+import { teamWith } from "@/lib/team";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewPropertyPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const user = await requireRole(["OFFICE_MANAGER", "PROPERTY_MANAGER"]);
+  const user = await requirePermission("properties.manage");
   const sp = await searchParams;
   const org = user.organizationId;
   const [branches, managers, owners] = await Promise.all([
     db.branch.findMany({ where: { organizationId: org }, select: { id: true, name: true } }),
-    db.user.findMany({ where: { organizationId: org, role: { in: ["OFFICE_MANAGER", "PROPERTY_MANAGER"] }, status: "ACTIVE" }, select: { id: true, name: true } }),
+    teamWith(org, "properties.manage"),
     db.owner.findMany({ where: { organizationId: org, status: "ACTIVE" }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   // Coming from an owner's page (?ownerId=): pre-select that owner at 100%.
