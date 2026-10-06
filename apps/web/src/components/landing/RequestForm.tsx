@@ -1,6 +1,5 @@
 "use client";
 
-
 import { keepFormValues } from "@/lib/keep-form";
 import { useActionState } from "react";
 import { requestAccessAction, type RequestState } from "@/app/request/actions";
@@ -25,7 +24,7 @@ export function RequestForm({ cities }: { cities: string[] }) {
     <form onSubmit={keepFormValues(action)} className="request-form">
       <label className="request-field">
         <span>اسمك</span>
-        <input name="name" autoComplete="name" required maxLength={80} />
+        <input name="name" autoComplete="name" required maxLength={80} placeholder="الاسم الكامل" />
       </label>
       <label className="request-field">
         <span>اسم المكتب</span>
@@ -53,9 +52,10 @@ export function RequestForm({ cities }: { cities: string[] }) {
       {/* honeypot */}
       <input name="website" tabIndex={-1} autoComplete="off" className="request-hp" aria-hidden="true" />
       {state?.error && <div className="request-error">{state.error}</div>}
-      <button type="submit" className="btn btn-primary request-submit" disabled={pending}>
+      <button type="submit" className="lp-btn lp-btn-brand request-submit" disabled={pending}>
         {pending ? "جارٍ الإرسال…" : "اطلب حسابًا لمكتبك"}
       </button>
+      <p className="request-note">نفتح الحسابات بأنفسنا؛ لا تسجيل ذاتي ولا كلمات مرور. سيتصل بك فريق دارك على هذا الرقم.</p>
     </form>
   );
 }
