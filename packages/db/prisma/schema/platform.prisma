@@ -43,6 +43,7 @@ model Organization {
   bankTxns       BankTransaction[]
   collections    CollectionCase[]
   supportTickets SupportTicket[]
+  aiConnections  AiConnection[]
 }
 
 model Branch {

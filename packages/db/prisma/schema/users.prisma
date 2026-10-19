@@ -51,6 +51,7 @@ model User {
   importJobs          ImportJob[]
   sessions            Session[]
   supportTickets      SupportTicket[]
+  aiConnections       AiConnection[]
   @@index([organizationId, role])
 }
 

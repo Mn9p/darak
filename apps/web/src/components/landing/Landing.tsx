@@ -27,6 +27,7 @@ const MODULES: { label: string; icon: IconName }[] = [
   { label: "فريق العمل", icon: "users" },
   { label: "التقارير", icon: "chart" },
   { label: "الاستيراد من Excel", icon: "upload" },
+  { label: "المساعد الذكي", icon: "sparkle" },
 ];
 
 const ROLES: { who: string; line: string; tone: "owner" | "employee" | "portal"; items: { label: string; icon: IconName; off?: boolean }[]; note: string }[] = [
@@ -95,6 +96,13 @@ const DAY = [
   { when: "آخر الشهر", title: "كشف المالك", body: "الإيراد والأتعاب والمصروفات وصافي المستحق، تعتمده ويوصل المالك في بوابته، بلا ملفات ولا رسائل.", shot: "statement" },
 ];
 
+/** The assistant section's sample answer (illustrative names and figures). */
+const AI_ROWS = [
+  { tenant: "فهد العتيبي", unit: "عمارة النخيل · شقة 4", amount: "18,500" },
+  { tenant: "مؤسسة الريان", unit: "مجمع الياسمين · معرض 2", amount: "12,000" },
+  { tenant: "نورة القحطاني", unit: "عمارة النخيل · شقة 9", amount: "7,250" },
+];
+
 const SAFETY = [
   "كل مكتب معزول عن غيره تمامًا: أي استعلام أو إجراء محصور في مكتبك وفي صلاحيات اللي سوّاه.",
   "سجل تدقيق ما ينحذف: كل تعديل مسجّل باسم اللي سوّاه ووقته وجهازه، مع القيمة قبل وبعد.",
@@ -133,6 +141,10 @@ const FAQ = [
   {
     q: "وش يشوف المالك والمستأجر؟",
     a: "كل واحد يدخل برقم جواله المسجّل عند المكتب: المالك يشوف عقاراته وتحصيله وكشوف حسابه، والمستأجر يشوف عقده ودفعاته؛ بلا مكالمات ولا كلمات مرور.",
+  },
+  {
+    q: "أقدر أستخدم دارك من Claude أو ChatGPT أو Gemini؟",
+    a: "إيه. كل عضو في المكتب يربط مساعده الذكي برابط واحد (MCP) ويدخل دارك برقم جواله، وبعدها يسأل بالعربي عن العقود والتحصيل والمصروفات والكشوف. المساعد يقرأ بس، وفي حدود صلاحيات العضو نفسه، وما يقدر يعدّل أي شي.",
   },
   {
     q: "كيف أبدأ؟",
@@ -175,6 +187,7 @@ export function Landing() {
           <nav className="lp-links" aria-label="أقسام الصفحة">
             <a href="#roles">الأدوار</a>
             <a href="#day">يومك في دارك</a>
+            <a href="#ai">المساعد الذكي</a>
             <a href="#features">ما يغطيه</a>
             <a href="#faq">الأسئلة الشائعة</a>
           </nav>
@@ -340,6 +353,54 @@ export function Landing() {
         </div>
       </section>
 
+      <section id="ai" className="lp-section lp-band" aria-labelledby="ai-h">
+        <div className="lp-wrap lp-ai">
+          <div className="reveal">
+            <p className="lp-eyebrow">المساعد الذكي</p>
+            <h2 id="ai-h" className="lp-h2">
+              اسأل مساعدك الذكي عن بيانات مكتبك العقاري
+            </h2>
+            <p className="lp-sub">اربط Claude أو ChatGPT أو Gemini بدارك خلال دقيقة، واسأله بالعربي: مين المتأخرين في السداد، وش العقود اللي بتنتهي، وكم حصّلت هالشهر.</p>
+            <ul className="lp-ai-list">
+              <li>رابط واحد (MCP) تلصقه في مساعدك، وتدخل دارك برقم جوالك.</li>
+              <li>يشوف بس اللي يشوفه العضو نفسه، بنفس صلاحياته وعقاراته.</li>
+              <li>يقرأ بس، وما يقدر يعدّل أو يحذف أي شي. وتوقف الربط متى ما بغيت.</li>
+            </ul>
+            <div className="lp-ai-with">
+              يشتغل مع <b className="latin">Claude</b>
+              <b className="latin">ChatGPT</b>
+              <b className="latin">Gemini</b>
+            </div>
+          </div>
+          <figure className="lp-chat reveal" style={{ margin: 0 }} aria-label="مثال محادثة مع المساعد الذكي">
+            <div className="lp-chat-head">
+              <b>
+                <Icon name="sparkle" size={18} /> مساعدك الذكي
+              </b>
+              <span className="lp-chat-on">دارك متصل</span>
+            </div>
+            <div className="lp-chat-body">
+              <div className="lp-bubble lp-bubble-me">مين المستأجرين المتأخرين في السداد هالشهر؟</div>
+              <div className="lp-tool">
+                <Icon name="search" size={14} /> يقرأ من دارك · <code>list_overdue_rent</code>
+              </div>
+              <div className="lp-bubble lp-bubble-ai">
+                عندك ثلاث دفعات متأخرة مجموعها <b className="num">37,750</b> ريال، أكبرها على فهد العتيبي من <span className="num">24</span> يوم:
+                <div className="lp-chat-rows">
+                  {AI_ROWS.map((r) => (
+                    <div key={r.tenant}>
+                      <b>{r.tenant}</b>
+                      <span>{r.unit}</span>
+                      <strong className="num">{r.amount} ر.س</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </figure>
+        </div>
+      </section>
+
       <section className="lp-safe" aria-labelledby="safe-h">
         <span className="najdi lp-roof lp-roof-top" aria-hidden />
         <div className="lp-safe-deco" aria-hidden>
@@ -459,6 +520,7 @@ export function Landing() {
                 <b>الصفحة</b>
                 <a href="#roles">الأدوار</a>
                 <a href="#day">يومك في دارك</a>
+                <a href="#ai">المساعد الذكي</a>
                 <a href="#features">ما يغطيه</a>
                 <a href="#faq">الأسئلة الشائعة</a>
               </div>

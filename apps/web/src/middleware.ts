@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC = ["/login", "/privacy", "/terms", "/api/cron", "/api/health", "/_next", "/favicon", "/logo-mark", "/brand", "/screenshots"];
+const PUBLIC = ["/login", "/privacy", "/terms", "/api/cron", "/api/health", "/api/mcp", "/.well-known", "/oauth", "/_next", "/favicon", "/logo-mark", "/brand", "/screenshots"];
 
 /**
  * Content-Security-Policy with a fresh nonce per request: only scripts carrying the nonce (Next adds it to its own

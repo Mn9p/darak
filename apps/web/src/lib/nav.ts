@@ -68,6 +68,7 @@ export const NAV: NavSection[] = [
       { href: "/import", label: "الاستيراد من Excel", short: "الاستيراد", permission: "import.manage", icon: "upload" },
       { href: "/integrations", label: "التكاملات", permission: "integrations.manage", icon: "plug" },
       { href: "/settings", label: "الإعدادات", permission: "settings.manage", icon: "settings" },
+      { href: "/assistant", label: "المساعد الذكي", short: "المساعد", icon: "sparkle" },
       { href: "/help", label: "المساعدة", icon: "help" },
     ],
   },

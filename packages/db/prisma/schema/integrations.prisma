@@ -71,3 +71,23 @@ model SupportTicket {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 }
+
+/// An AI assistant (Claude, ChatGPT, Gemini…) a staff member connected over MCP (apps/web/src/lib/mcp). Read-only:
+/// the assistant sees what that member may see, nothing more. Tokens are signed JWTs naming this row, so revoking the
+/// row cuts the assistant off at its next request. refreshVersion rotates with each refresh; an older token is refused.
+model AiConnection {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientName     String
+  redirectHost   String?
+  refreshVersion Int          @default(0)
+  lastUsedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([userId])
+}
