@@ -15,7 +15,7 @@ export function RequestForm({ cities }: { cities: string[] }) {
           ✓
         </span>
         <b>وصلنا طلبك.</b>
-        <span>سيتواصل معك فريق دارك خلال يوم عمل لتفعيل مكتبك وشرح الخطوات الأولى.</span>
+        <span>فريق دارك بيكلمك خلال يوم عمل، يفعّل مكتبك ويشرح لك أول الخطوات.</span>
       </div>
     );
   }
@@ -46,16 +46,16 @@ export function RequestForm({ cities }: { cities: string[] }) {
         </select>
       </label>
       <label className="request-field request-field-wide">
-        <span>عدد العقارات تقريبًا، أو أي سؤال</span>
+        <span>كم عقار عندك تقريبًا؟ أو أي سؤال</span>
         <textarea name="message" rows={2} maxLength={600} />
       </label>
       {/* honeypot */}
       <input name="website" tabIndex={-1} autoComplete="off" className="request-hp" aria-hidden="true" />
       {state?.error && <div className="request-error">{state.error}</div>}
       <button type="submit" className="lp-btn lp-btn-brand request-submit" disabled={pending}>
-        {pending ? "جارٍ الإرسال…" : "اطلب حسابًا لمكتبك"}
+        {pending ? "جارٍ الإرسال…" : "اطلب حساب لمكتبك"}
       </button>
-      <p className="request-note">نفتح الحسابات بأنفسنا؛ لا تسجيل ذاتي ولا كلمات مرور. سيتصل بك فريق دارك على هذا الرقم.</p>
+      <p className="request-note">نفتح الحسابات بنفسنا؛ ما فيه تسجيل ذاتي ولا كلمات مرور. فريق دارك بيتصل عليك على هذا الرقم.</p>
     </form>
   );
 }
