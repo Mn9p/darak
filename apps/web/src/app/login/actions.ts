@@ -34,7 +34,8 @@ const PROBE_MAX = 10;
 // Wrong codes per IP (all numbers together) in the same window.
 const VERIFY_MAX_WRONG = 20;
 
-const SAFE_PATH = /^\/[A-Za-z0-9_\-./?=&%#]*$/;
+// `+`, `*` and `~` appear in URLSearchParams-encoded queries (e.g. a space-separated OAuth scope on /oauth/authorize).
+const SAFE_PATH = /^\/[A-Za-z0-9_\-./?=&%#+*~]*$/;
 
 /** Only same-origin relative paths: no scheme, no protocol-relative `//`, no backslashes, plain URL characters only. */
 function safeNext(next: string, home: string) {
